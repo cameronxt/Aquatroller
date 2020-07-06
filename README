@@ -1,0 +1,45 @@
+Aquatroller
+
+By cameronxt
+
+Description:
+
+An arduino UNO based aquarium controller. Used to control various aspects of 
+a freshwater planted tank. All the controllers i found used older hardware or where aimed at saltwater/reef tanks.
+I also wanted to use newer, more accurate peripherals than what i could find.
+
+Working On:
+
+* Temp Control Via heater
+	- Set temperature
+	- Control Heater Outlet based on temp
+	- Monitor temp via DS ds18b20
+		- Supports 2 Sensors as a fail safe
+		
+* CO2 Control
+	- Monitor PH with a standard PH Probe
+	- Actuate CO2 valve based on PH
+
+* SD Card Logging
+	- Log all events or just specific events
+	- Store on SD card as a CSV for easy manipulation in spreadsheet
+	
+* EEPROM Settings
+	-All settings stored in on-chip EEPROM
+	
+* Timer
+	- Timing taken care of by DS3231 RTC
+	- adjustable timing between checks (ie: Check PH every X seconds)
+	- User settable light timer
+	
+* Lights
+	- Control a minimum of six channels of LED's (Using Meanwell or similar drivers)
+	- Independantly adjustable fade ramps
+	- On/off timer
+	
+* Automatic Top-off
+	- Uses 2 sensors as a failsafe
+		- Rely's on optical sensor with a backup reed float
+	- Open valve from (prefferably) an RO water system
+	
+	
