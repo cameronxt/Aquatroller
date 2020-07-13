@@ -5,8 +5,9 @@ By cameronxt
 Description:
 
 An arduino UNO based aquarium controller. Used to control various aspects of 
-a freshwater planted tank. All the controllers i found used older hardware or where aimed at saltwater/reef tanks.
-I also wanted to use newer, more accurate peripherals than what i could find.
+a freshwater planted tank. All the controllers i found used older hardware or 
+were aimed at saltwater/reef tanks. I also wanted to use newer, more accurate 
+peripherals than what i could find in most projects.
 
 Working On:
 
@@ -43,3 +44,7 @@ Working On:
 	- Open valve from (prefferably) an RO water system
 	
 	
+	
+Hardware:
+I have designed a printable circuit board to allow easy plug and play of commonly available modules.
+Arduino UNO(ATMega 328p): Main processor. 
