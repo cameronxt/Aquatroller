@@ -1,6 +1,6 @@
 #ifndef ph_h
 #define ph_h
-#include <Arduino.h>
+#include <Arduino.h> 
 const int pin = A0;   // PH Sensor Analog pin
 const int bufSize = 10;
 
@@ -22,7 +22,7 @@ class PH {
     void setPHDelay(unsigned long NewDelay);
     unsigned long getPHDelay();
     void getCurrentPH();
-    void calibrate();
+    void calibrate();             
   private:
 };
 

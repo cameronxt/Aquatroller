@@ -1,45 +1,52 @@
-// 1.0.0 initial release - basic bluetooth, sd card and eeprom
-// 1.0.1 adds basic RTC functionality
-// 1.0.2 adds basic Temp sensor functionality
+// 0.0.0 initial release - basic bluetooth, sd card and eeprom
+// 0.0.1 adds basic RTC functionality
+// 0.0.2 adds basic Temp sensor functionality
+// 0.0.3 adds basic Bluetooth, EEProm access, sd Card access and PH control
+// 0.0.4 adds basic led control
 
 #include "eepromaccess.h"
 #include "sdaccess.h"
 #include "bluetooth.h"
 #include "temp.h"
+#include "lights.h"
 #include <DS3232RTC.h>                 // https://github.com/JChristensen/DS3232RTC
 #include "RTClib.h"
 
-EepromAccess eeprom;    // Create eeprom class
-BluetoothModule bt;     // Create bt class
-SDAccess sd;            // create SD card class
-RTC_DS3231 rtc;
+EepromAccess eeprom;    // Create eeprom instance
+BluetoothModule bt;     // Create bt instance
+SDAccess sd;            // create SD card instance
+RTC_DS3231 rtc;         // Create RTC instance
 
-OneWire oneWire;
-DallasTemperature tempSensors(&oneWire);
-Temp temp(&tempSensors);
+;
+Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();  // Setup PWM Driver
+Light light(&pwm, &rtc);  // Setup my light, needs the driver and the time
+
+OneWire oneWire;                            // Setup onewire connection for comms with temp sensor(s)
+DallasTemperature tempSensors(&oneWire);    // tell temp sensor library how to talk to the temp sensors(s)
+Temp temp(&tempSensors);                    // Tell the included temp control library which sensors we are using 
 
 
 // constants for seconds in standard units of time
-
 const unsigned long SecondsPerHour = 60UL * 60;
 const unsigned long SecondsPerMinute = 60;
 
 void setup() {
   Serial.begin(9600);
-  setupRTC();
+  setupRTC();         // setup routine, gets time from RTC and sets it in the sketch
   eeprom.init();      // Check for existing save, load if found, else generate new save and populate with default values
-  bt.init();          // init bluetooth
-  sd.init();          // init sd card, if card not present dont try to log
+  bt.init();          // init bluetooth comms
+  sd.init();          // init sd card, TODO: if card not present dont try to log
+  light.init();       // set initial state and begin running routines
 }
 
 void loop() {
-  // Keep out of timers, this is a non blocking bluetooth implementation
-
+  // This is a non blocking bluetooth implementation. Thanks to Robin2's mega post for most of this code
   unsigned long currentTime = millis();
   bt.loop();          // Check for and save valid packets
-  if (bt.newParse) {
-    decodePacket(bt.parsedData);
-    bt.newParse=false;
+  
+  if (bt.newParse) {              // If we have a new parsed packet
+    decodePacket(bt.parsedData);  // Decode and perform correct call
+    bt.newParse=false;            // Set to false so we can get a new packet
   }
 
   
@@ -47,14 +54,16 @@ void loop() {
 
     eeprom.loop();
     temp.loop(currentTime);
-  // Timer function
+    light.loop(getTimeInSeconds(0,0,0));    // Run light controls, it needs to know the current time
+
+  // Timer functions
   // unsigned long currentTime =
 }
 
 
-void decodePacket(BTParse data) { // Decides which actions should be taken on input
+void decodePacket(BTParse data) { // Decides which actions should be taken on input packet
 
-  switch (data.type) {
+  switch (data.primary) {
     case 0: // EEPROM
       break;
     case 1: // LED
@@ -62,6 +71,21 @@ void decodePacket(BTParse data) { // Decides which actions should be taken on in
     case 2: // SD Card
       break;
     case 3: // Bluetooth
+      break;
+    case 4: // PH
+      switch (data.option) {
+        case 0: // Target PH
+          switch (data.subOption) {
+            case 0:
+              //ph.getTargetPH();
+            break;
+
+            case 1:
+              //ph.setTargtPH(data.value);
+             break;
+          }
+        break;
+      }
       break;
   }
 }

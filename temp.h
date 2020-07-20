@@ -15,13 +15,13 @@ struct TemperatureData {
 
 class Temp {
   TemperatureData tempData;
-  unsigned long prevTempTime;
-  unsigned long prevConversionTime;
-  unsigned long conversionTime = 750;
-  unsigned long prevHeaterTime;
-  float temps[2] = {0, 0};
-  bool waitingToCheck = false;
-  bool isHeaterOn = false;
+  unsigned long prevTempTime;               // Timer to only check temp every so often
+  unsigned long prevConversionTime;         // Timer for conversion times
+  unsigned long conversionTime = 750;       // Amount of time to wait for conversion after request in milliseconds
+  unsigned long prevHeaterTime;             // Timer to control how often the heater can be cycled
+  float temps[2] = {0, 0};                  // Most recent available temps
+  bool waitingToCheck = false;              // Flag for when we are waiting to check after conversion
+  bool isHeaterOn = false;                  // Flag to track state of heater
 
   public:
     Temp(DallasTemperature* _temp);

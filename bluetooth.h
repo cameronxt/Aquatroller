@@ -8,7 +8,7 @@
 const byte numChars = 32;
 
 struct BTParse {
-  byte type;
+  byte primary;
   byte option;
   byte subOption;
   byte value;

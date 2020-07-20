@@ -66,7 +66,7 @@ void BluetoothModule::parseData() {      // split the data into its parts
   char * strtokIndx; // this is used by strtok() as an index
 
   strtokIndx = strtok(tempChars, ",");     // get the system
-  parsedData.type = atoi(strtokIndx);
+  parsedData.primary = atoi(strtokIndx);
   strtokIndx = strtok(NULL, ","); // this continues where the previous call left off
   parsedData.option = atoi(strtokIndx);
   strtokIndx = strtok(NULL, ",");
