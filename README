@@ -5,41 +5,77 @@ By cameronxt
 Description:
 
 An arduino UNO based aquarium controller. Used to control various aspects of 
-a freshwater planted tank. All the controllers i found used older hardware or where aimed at saltwater/reef tanks.
-I also wanted to use newer, more accurate peripherals than what i could find.
+  a freshwater planted tank. All the controllers i found used older hardware or 
+  were aimed at saltwater/reef tanks. I also wanted to use newer, more accurate 
+  peripherals than what i could find in most projects.
 
 Working On:
 
 * Temp Control Via heater
-	- Set temperature
-	- Control Heater Outlet based on temp
-	- Monitor temp via DS ds18b20
-		- Supports 2 Sensors as a fail safe
+  - Set temperature
+  - Control Heater Outlet based on temp
+  - Monitor temp via DS ds18b20
+  - Supports 2 Sensors as a fail safe
 		
 * CO2 Control
-	- Monitor PH with a standard PH Probe
-	- Actuate CO2 valve based on PH
+  - Monitor PH with a standard PH Probe
+  - Actuate CO2 valve based on PH
 
 * SD Card Logging
-	- Log all events or just specific events
-	- Store on SD card as a CSV for easy manipulation in spreadsheet
+  - Log all events or just specific events
+  - Store on SD card as a CSV for easy manipulation in spreadsheet
 	
 * EEPROM Settings
-	-All settings stored in on-chip EEPROM
+  -All settings stored in on-chip EEPROM
 	
 * Timer
-	- Timing taken care of by DS3231 RTC
-	- adjustable timing between checks (ie: Check PH every X seconds)
-	- User settable light timer
+  - Timing taken care of by DS3231 RTC
+  - adjustable timing between checks (ie: Check PH every X seconds)
+  - User settable light timer
 	
 * Lights
-	- Control a minimum of six channels of LED's (Using Meanwell or similar drivers)
-	- Independantly adjustable fade ramps
-	- On/off timer
+  - Control a minimum of six channels of LED's (Using Meanwell or similar drivers)
+  - Independantly adjustable fade ramps
+  - On/off timer
 	
 * Automatic Top-off
-	- Uses 2 sensors as a failsafe
-		- Rely's on optical sensor with a backup reed float
-	- Open valve from (prefferably) an RO water system
+  - Uses 2 sensors as a failsafe
+    - Relies on optical sensor with a backup reed float
+      - Open valve from (prefferably) an RO water system
 	
 	
+	
+Hardware:
+I have designed a printable circuit board to allow easy plug and play of commonly available modules.
+  I will make this board and schematics available once I am done testing.
+
+Arduino UNO(ATMega 328p): Main processor. I use an UNO Nano, because its small, but any UNO will 
+  work fine if your breadboarding it.
+  
+RTC DS3231 - Much more accurate than the 1307 that everyone seems to use and about the same price as modules.
+	
+DS18b20 Temperture Sensor: x2 Sensors. I use the ones that are sealed in a stainless steel tube with 
+  3 Meters of leads. These use a "one wire connection" and you can daisy chain as many as you would 
+  like. Currently code only supports 2.
+  
+Photoelectric Liquid Level Sensor(SEN0205): Non-Mechanical Liquid level sensor. This is the main water 
+  level Sensor. I cannot find a model number on my knockoff, but the part number on dfRobots's website
+  is SEN0205 to give you an example.
+
+Reed Float Switch - Mechanical Fluid level detector. I mounted this slightly above the optical sensor. 
+  This will be a backup sensor.
+  
+Bluetooth Module - Currently using an HC-05 as that what i have on hand, But will add support for HM-10.
+  
+SD Card Reader - 
+
+4 Channel Solid State Relay - Highly reccomend a solid state instead of electro-magnetic
+
+Meanwell LDD Series Drivers - Should work with any driver that accepts 5V PWM for dimming
+
+PCA9685 PWM Servo Module - Give us 16 channels of 12-bit (4096 steps VS Arduino's 255). Runs on I2C
+
+SD Card Reader Module - I used a generic SPI module, most should work
+
+PH Sener Module with PH Probe - I used a generic module
+
