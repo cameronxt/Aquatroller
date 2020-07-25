@@ -19,12 +19,10 @@ void Temp::loop(unsigned long currentTime) {
     //    Serial.println("Checking Heater");
     prevHeaterTime = currentTime;                                                                   // reset heater timer
     if ((temps[0] <= tempData.targetTemp - 0.5) && (temps[1] <= tempData.targetTemp - 0.5)) {       // if temp is low
-      //TurnHeaterOn
       if (!isHeaterOn) {                                                                            // and heater is off
         turnHeaterOn();                                                                             // then turn it on
       }
     } else if ((temps[0] >= tempData.targetTemp) || (temps[1] >= tempData.targetTemp)) {            // if temp is to high
-      // Turn Heater Off
       if (isHeaterOn) {                                                                             // and heater is on
         turnHeaterOff();                                                                            // Then Turn it off
       }

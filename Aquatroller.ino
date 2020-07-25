@@ -11,12 +11,13 @@
 #include "lights.h"
 #include <DS3232RTC.h>                 // https://github.com/JChristensen/DS3232RTC
 #include "RTClib.h"
+#include "ph.h"
 
 EepromAccess eeprom;    // Create eeprom instance
 BluetoothModule bt;     // Create bt instance
 SDAccess sd;            // create SD card instance
 RTC_DS3231 rtc;         // Create RTC instance
-
+PH phMonitor;
 ;
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();  // Setup PWM Driver
 Light light(&pwm, &rtc);  // Setup my light, needs the driver and the time
