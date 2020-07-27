@@ -5,8 +5,8 @@ Light::Light(Adafruit_PWMServoDriver *pwm, RTC_DS3231 *rtc) {
   //_rtc = rtc;
   _data.normalFadeDelay = 5;
   _data.testFadeDelay = 5;
-//  setSyncProvider(_rtc->get);
- // _targetBright = _data.normalMaxBright;
+  //  setSyncProvider(_rtc->get);
+  // _targetBright = _data.normalMaxBright;
 }
 
 void Light::init() {
@@ -42,18 +42,18 @@ void Light::loop(unsigned long ssm) {
 
 
 bool Light::isLightTime(unsigned long ssm) {
-//  Serial.print ("Current ");
-//  Serial.println (ssm);
-//  Serial.print ("onTime ");
-//  Serial.println (_data.onTime);
-//  Serial.print ("OffTime ");
-//  Serial.println (_data.offTime);
+  //  Serial.print ("Current ");
+  //  Serial.println (ssm);
+  //  Serial.print ("onTime ");
+  //  Serial.println (_data.onTime);
+  //  Serial.print ("OffTime ");
+  //  Serial.println (_data.offTime);
 
   if ((ssm >= this->_data.onTime) && (ssm < _data.offTime)) {
-      return true;
-  } else { 
-      return false;
-  } 
+    return true;
+  } else {
+    return false;
+  }
 
 }
 
@@ -63,7 +63,7 @@ void Light::normalLights(unsigned long ssm) {
   if (millis() - prevMillis > _data.normalFadeDelay) {     // Wait for delay
     //Serial.println("Light Delay Exceeded");
     if (isLightTime(ssm)) {                           // if light is supposed to be on
-      _targetBright=_data.normalMaxBright;
+      _targetBright = _data.normalMaxBright;
       if ((_targetBright > _normalCurrentBright) && (_normalCurrentBright < _data.normalMaxBright)) {             // and target bright is brighter than current
 
         _normalCurrentBright++;                                 // make one step brighter
@@ -72,7 +72,7 @@ void Light::normalLights(unsigned long ssm) {
         }
       }
     } else {                                                    // If light is supposed to be off
-      _targetBright=0;
+      _targetBright = 0;
       if ((_targetBright < _normalCurrentBright) && (_normalCurrentBright > 0)) {             // and target brightness is lower than current bright
         _normalCurrentBright--;                                 // make one step dimmer
         for (int i = 0; i < 6; i++) {                           // Set all channels to new value

@@ -2,12 +2,12 @@
 #define lights_h
 #include <Arduino.h>
 #include <Wire.h>
-#include <Adafruit_PWMServoDriver.h>
+#include <Adafruit_PWMServoDriver.h>   // https://github.com/pkourany/Adafruit_PWMServoDriver_IDE 
 #include <DS3232RTC.h>                 // https://github.com/JChristensen/DS3232RTC
 #include "RTClib.h"
 #include <TimeLib.h>
 
-enum LightModes {NORMAL,SUNLIGHT,CUSTOM,TEST};
+enum LightModes {NORMAL, SUNLIGHT, CUSTOM, TEST};
 
 struct Channel {
 
@@ -32,7 +32,7 @@ class Light {
 
     int _targetBright;
     int _normalCurrentBright;
-    
+
     void init();
     void loop(unsigned long ssm);
     void normalLights(unsigned long ssm);

@@ -43,6 +43,6 @@ void EepromAccess::updateSettings() {           // Updates(not write) eeprom wit
   }
 }
 
-void EepromAccess::loop(){
-  
+void EepromAccess::loop() {
+
 }

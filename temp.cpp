@@ -8,7 +8,7 @@ void Temp::init() {
   _temp->begin();                           // Initialize comms with temp sensors
   _temp->setWaitForConversion("FALSE");     // We dont want to wait, it blocks us, so we will time it ourselves
   pinMode(heaterPin, OUTPUT);               // Setup heater pin as output
-  digitalWrite(heaterPin, HIGH);            // Turn it off  
+  digitalWrite(heaterPin, HIGH);            // Turn it off
 }
 
 void Temp::loop(unsigned long currentTime) {
@@ -53,7 +53,7 @@ void Temp::turnHeaterOn() {
   if (!isHeaterOn) {                                  // Only Turn it on if its off
     Serial.println("Turning heater ON");
     digitalWrite(heaterPin, LOW);                     // Turn on heater
-    isHeaterOn = true;                                
+    isHeaterOn = true;
   }
 }
 
@@ -65,7 +65,7 @@ void Temp::turnHeaterOff() {
   }
 }
 
-unsigned long Temp::getHeaterDelay(){
+unsigned long Temp::getHeaterDelay() {
   return tempData.heaterDelayTime;
 }
 
@@ -73,18 +73,18 @@ void Temp::setHeaterDelay(unsigned long newDelay) {
   tempData.heaterDelayTime = newDelay;
 }
 
-unsigned long Temp::getTempDelay(){
+unsigned long Temp::getTempDelay() {
   return tempData.tempDelayTime;
 }
 
-void Temp::setTempDelay(unsigned long newDelay){
+void Temp::setTempDelay(unsigned long newDelay) {
   tempData.tempDelayTime = newDelay;
 }
 
-float Temp::getTargetTemp(){
+float Temp::getTargetTemp() {
   return tempData.targetTemp;
 }
 
-void Temp::setTargetTemp(float newTemp){
+void Temp::setTargetTemp(float newTemp) {
   tempData.targetTemp = newTemp;
 }

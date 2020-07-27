@@ -10,7 +10,7 @@
 #include "temp.h"
 #include "lights.h"
 #include <DS3232RTC.h>                 // https://github.com/JChristensen/DS3232RTC
-#include "RTClib.h"
+#include <RTClib.h>
 #include "ph.h"
 
 EepromAccess eeprom;    // Create eeprom instance
@@ -24,7 +24,7 @@ Light light(&pwm, &rtc);  // Setup my light, needs the driver and the time
 
 OneWire oneWire;                            // Setup onewire connection for comms with temp sensor(s)
 DallasTemperature tempSensors(&oneWire);    // tell temp sensor library how to talk to the temp sensors(s)
-Temp temp(&tempSensors);                    // Tell the included temp control library which sensors we are using 
+Temp temp(&tempSensors);                    // Tell the included temp control library which sensors we are using
 
 
 // constants for seconds in standard units of time
@@ -44,19 +44,20 @@ void loop() {
   // This is a non blocking bluetooth implementation. Thanks to Robin2's mega post for most of this code
   unsigned long currentTime = millis();
   bt.loop();          // Check for and save valid packets
-  
+
   if (bt.newParse) {              // If we have a new parsed packet
     decodePacket(bt.parsedData);  // Decode and perform correct call
-    bt.newParse=false;            // Set to false so we can get a new packet
+    bt.newParse = false;          // Set to false so we can get a new packet
   }
 
+
+
+
+
+  temp.loop(currentTime);
+  light.loop(getTimeInSeconds(0, 0, 0));  // Run light controls, it needs to know the current time
   
-
-
-    eeprom.loop();
-    temp.loop(currentTime);
-    light.loop(getTimeInSeconds(0,0,0));    // Run light controls, it needs to know the current time
-
+  eeprom.loop();
   // Timer functions
   // unsigned long currentTime =
 }
@@ -79,13 +80,13 @@ void decodePacket(BTParse data) { // Decides which actions should be taken on in
           switch (data.subOption) {
             case 0:
               //ph.getTargetPH();
-            break;
+              break;
 
             case 1:
               //ph.setTargtPH(data.value);
-             break;
+              break;
           }
-        break;
+          break;
       }
       break;
   }
