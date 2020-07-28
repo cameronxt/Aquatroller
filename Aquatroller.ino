@@ -1,8 +1,8 @@
 // 0.0.0 initial release - basic bluetooth, sd card and eeprom
 // 0.0.1 adds basic RTC functionality
 // 0.0.2 adds basic Temp sensor functionality
-// 0.0.3 adds basic Bluetooth, EEProm access, sd Card access and PH control
-// 0.0.4 adds basic led control
+// 0.0.3 adds more basic Bluetooth, EEPROM access, SD Card access and PH control
+// 0.0.4 adds basic LED control
 
 #include "eepromaccess.h"
 #include "sdaccess.h"
@@ -23,8 +23,8 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();  // Setup PWM Driver
 Light light(&pwm, &rtc);  // Setup my light, needs the driver and the time
 
 OneWire oneWire;                            // Setup onewire connection for comms with temp sensor(s)
-DallasTemperature tempSensors(&oneWire);    // tell temp sensor library how to talk to the temp sensors(s)
-Temp temp(&tempSensors);                    // Tell the included temp control library which sensors we are using
+DallasTemperature tempSensors(&oneWire);    // tell temp sensor library to use oneWire to talk to sensors
+Temp temp(&tempSensors);                    // Tell the temp control library which sensors to use
 
 
 // constants for seconds in standard units of time
@@ -56,7 +56,7 @@ void loop() {
 
   temp.loop(currentTime);
   light.loop(getTimeInSeconds(0, 0, 0));  // Run light controls, it needs to know the current time
-  
+
   eeprom.loop();
   // Timer functions
   // unsigned long currentTime =
