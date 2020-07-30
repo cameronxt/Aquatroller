@@ -10,18 +10,21 @@
 #include "temp.h"
 #include "lights.h"
 #include <DS3232RTC.h>                 // https://github.com/JChristensen/DS3232RTC
-#include <RTClib.h>
+//#include <RTClib.h>
 #include "ph.h"
 
 EepromAccess eeprom;    // Create eeprom instance
 BluetoothModule bt;     // Create bt instance
 SDAccess sd;            // create SD card instance
 RTC_DS3231 rtc;         // Create RTC instance
-PH phMonitor;
-;
+
+PH phControl(A0, 8, &rtc);     // Create Ph Controller - Inputs = (PH Input Pin, C02 Relay Trigger Pin, Pointer to RTC)
+
+// PWM and LEDS
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();  // Setup PWM Driver
 Light light(&pwm, &rtc);  // Setup my light, needs the driver and the time
 
+// Temp Sensors
 OneWire oneWire;                            // Setup onewire connection for comms with temp sensor(s)
 DallasTemperature tempSensors(&oneWire);    // tell temp sensor library to use oneWire to talk to sensors
 Temp temp(&tempSensors);                    // Tell the temp control library which sensors to use
@@ -38,6 +41,7 @@ void setup() {
   bt.init();          // init bluetooth comms
   sd.init();          // init sd card, TODO: if card not present dont try to log
   light.init();       // set initial state and begin running routines
+  phControl.init();
 }
 
 void loop() {
@@ -56,7 +60,7 @@ void loop() {
 
   temp.loop(currentTime);
   light.loop(getTimeInSeconds(0, 0, 0));  // Run light controls, it needs to know the current time
-
+  phControl.loop(currentTime);
   eeprom.loop();
   // Timer functions
   // unsigned long currentTime =
