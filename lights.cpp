@@ -2,7 +2,7 @@
 
 Light::Light(Adafruit_PWMServoDriver *pwm, RTC_DS3231 *rtc) {
   _pwm = pwm;
-  //_rtc = rtc;
+  _rtc = rtc;
   _data.normalFadeDelay = 5;
   _data.testFadeDelay = 5;
   //  setSyncProvider(_rtc->get);
