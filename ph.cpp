@@ -5,7 +5,6 @@ PH::PH(byte phInputPin, byte c02OutputPin, RTC_DS3231 *rtc) :
   _phPin(phInputPin),   // PH Sensor Analog pin
   _c02Pin (c02OutputPin),   // C02 relay pin
   _rtc(rtc)
-
 {
 
 }
@@ -39,10 +38,10 @@ void PH::init() {
    on c02 or turn it off.
 */
 // TODO: C02 Control && Getting resting PH
-void PH::loop(unsigned long currentTime) {
+void PH::loop(unsigned long ssm) {
 
   // Timer so we only read ph every so often
-  if (_prevPhTime - currentTime >= _phData.checkPhDelay) {
+  if (millis() - _prevPhTime >= _phData.checkPhDelay) {
 
     //Serial.println(F("its time to check it"));
     if (!_calibrationMode) {                        // Dont read ph during calibration so probe stabilize without interrupt
@@ -59,12 +58,19 @@ void PH::loop(unsigned long currentTime) {
   }
 
   // TODO: C02 Control
-  if (_prevC02Time - currentTime >= _phData.checkC02Delay) {
-    if (_currentPh < _targetPh) {
-      
+  if ((ssm > _phData.c02OnTime) && (ssm < _phData.c02OffTime)) {
+    if (millis() - _prevC02Time >= _phData.checkC02Delay) {        // Timer for c02 control
+      if (_currentPh > _targetPh) {                                   // PH is higher than target
+        turnOnC02();                                                  // turn on c02
+      } else {
+        turnOffC02();                                                 // otherwise turn it off
+      }
+      _prevC02Time = millis();                                        // Reset timer
     }
+  } else {
+    turnOffC02();
   }
-
+   
 }
 
 // Reads the raw sensor value and stores it in the buffer, then advance buffwe for next reading
@@ -93,7 +99,7 @@ void PH::processPhBuffer() {
       for (int i = 1; i < _bufSize - 1; i++) _avgValue += _buf[i]; // Drop highest and lowest value, add the rest together
 
       float pHVol = (float)_avgValue * 5.0 / 1024 / 8;        // average and convert to milli-volts
-      _currentPh = -5.70 * pHVol + 21.34 + _phData.phCalValue;                     // convert millivolts to PH reading
+      _currentPh = -5.70 * (float)pHVol + 21.34 + (float)_phData.phCalValue;                     // convert millivolts to PH reading
 
       // TODO: add calibration into reading
 
@@ -126,7 +132,7 @@ void PH::calibratePH(unsigned long currentTime, float* target) {
 
     Serial.println(F("Waiting for PH to stabilize..."));
 
-    if (_prevPhTime - currentTime >= _phData.phStabilizeDelay) {       // Timer to wait for stabilization period before reading ph
+    if (millis() - _prevPhTime >= _phData.phStabilizeDelay) {       // Timer to wait for stabilization period before reading ph
       int phVol = 0;
       if (!haveFirstPoint) {                               // Do we need the first actual cal point
 
@@ -156,10 +162,9 @@ void PH::calibratePH(unsigned long currentTime, float* target) {
 }
 
 // Set calibration points
-
-//     PH::setCalPoints(calPoints[] , calReadVal[]);
+// Example: PH::setCalPoints(calPoints[] , calReadVal[]);
 void PH::setCalPoints(float * calTarget, float * calActual) {
-   _phData.phCalValue = (( calTarget[0] - calActual[0] ) + ( calTarget[1] - calActual[1] )) / 2;
+  _phData.phCalValue = (( calTarget[0] - calActual[0] ) + ( calTarget[1] - calActual[1] )) / 2;
 }
 
 // Set resting PH as the current PH, only call once you know the C02 has offgassed, a
@@ -182,4 +187,16 @@ int PH::calculateC02PPM() {
 void PH::calculateTargetPh() {
   // pH = 6.35 + log(15.664 * dKH / cO2Target)
   _phData.targetPhC02 = 6.35 + log(12.839 * _phData.khHardness / _phData.targetPPMC02);
+}
+
+void PH::turnOnC02() {
+  if (_co2On) {
+    digitalWrite(_c02Pin, LOW);
+  }
+}
+
+void PH::turnOffC02() {
+  if (!_c02On) {
+    digitalWrite(_c02Pin, HIGH);
+  }
 }

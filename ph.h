@@ -57,6 +57,8 @@ struct PHData  {
   float targetPhC02;                          // PH target to know we have enough c02
   int targetPPMC02 = 20;                      // PPM of c02 that we are requesting
   float khHardness = 4.0;                     // KH hardness of your tank
+  unsigned long c02OnTime;
+  unsigned long c02OffTime;
 };
 
 class PH {
@@ -68,7 +70,7 @@ class PH {
     
     PH(byte phInputPin, byte c02OutputPin, RTC_DS3231 *rtc);
     void init();
-    void loop(unsigned long currentTime);
+    void loop(unsigned long ssm);
 
     // PH Methods
     void calibratePH(unsigned long currentTime, float* target);                     // PH Calibration Mode, gets calibration points
@@ -92,8 +94,8 @@ class PH {
     void calculateTargetPh();                 // Calculate Target PH for needed c02 levels based on calculated resting ph
     int calculateC02PPM();                    // Calculate the PPM of c02 based on PH
     
-    void turnOnC02() { digitalWrite(_c02Pin,LOW); };
-    void turnOffC02() { digitalWrite(_c02Pin,HIGH); };
+    void turnOnC02();
+    void turnOffC02();
 
     float getRestingPh() { return _phData.restingPh; };
     void setRestingPh(float restingPh) { _phData.restingPh = restingPh; };
@@ -109,6 +111,8 @@ class PH {
     
     float getkhHardness () { return _phData.khHardness; };
     void setKhHardness (float khHardness) { _phData.khHardness = khHardness; };
+
+    bool isC02On() { return _c02On; };
 
   private:
 
@@ -126,8 +130,9 @@ class PH {
     bool _needRestingPh = false;      // Flag for when its time to get the resting ph
     bool _c02On = false;              // Flag for C02 being on
     int _currentC02PPM;               // Stores current ppm of c02 based on ph drop
-    float _targetPh = 7.0;             // What PH are we targeting, will get changed based on c02 on or off
-    unsigned long _prevC02Time = 0;
+    float _targetPh = 7.0;            // What PH are we targeting, will get changed based on c02 on or off
+    unsigned long _prevC02Time = 0;   // When did we last check c02 in millis
+    bool _co2On = false;              // Flag to tell state of c02
 
 };
 
