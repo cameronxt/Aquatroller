@@ -4,6 +4,8 @@
 // 0.0.3 adds more basic Bluetooth, EEPROM access, SD Card access and PH control
 // 0.0.4 adds basic LED control
 
+#pragma GCC optimize ("-O2")   // Compiler Optimization Level
+
 #include "eepromaccess.h"
 #include "sdaccess.h"
 #include "bluetooth.h"
