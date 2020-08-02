@@ -24,6 +24,9 @@ void PH::init() {
   //    setKhHardness (float khHardness);
   //
   //    setCalPoints(float calTarget[], float calActual[]);
+
+  
+  // pinModes and whatnot
 }
 
 /* Loop function, place in your main loop() of your sketch.
@@ -45,36 +48,45 @@ void PH::loop(unsigned long ssm) {
 
     //Serial.println(F("its time to check it"));
     if (!_calibrationMode) {                        // Dont read ph during calibration so probe stabilize without interrupt
-      readPhRawToBuffer();
+      readPhRawToBuffer();                          // read raw data and store it to an array
       _prevPhTime = millis();                       // update PH timer to allow sensor to stabilize before next reading
-      processPhBuffer();
+      processPhBuffer();                            // Average and calculate new PH value
+    } else {
+      calibratePH();
     }
 
   }
-  // TODO: getting resting ph logic
-  // If resting PH is requested
+
+  // If resting PH is requested, either because its time or from a serial event (like bluetooth)
+  if (ssm > (_phData.c02OffTime + _phData.c02OffgasDelay )) {
+    _needRestingPh = true;
+  }
   if (_needRestingPh && _newPh) {
     calculateRestingPh();
   }
 
+
   // TODO: C02 Control
-  if ((ssm > _phData.c02OnTime) && (ssm < _phData.c02OffTime)) {
-    if (millis() - _prevC02Time >= _phData.checkC02Delay) {        // Timer for c02 control
-      if (_currentPh > _targetPh) {                                   // PH is higher than target
-        turnOnC02();                                                  // turn on c02
+  if ((ssm > _phData.c02OnTime) && (ssm < _phData.c02OffTime)) {   // Is it time for the c02 to be on
+    if (millis() - _prevC02Time >= _phData.checkC02Delay) {        // Timer for c02 control, keeps from cycling relay to quickly
+      if (_currentPh > _targetPh) {                                // PH is higher than target
+        turnOnC02();                                               // turn on c02
       } else {
-        turnOffC02();                                                 // otherwise turn it off
+        turnOffC02();                                              // otherwise turn it off
       }
-      _prevC02Time = millis();                                        // Reset timer
+      _prevC02Time = millis();                                     // Reset timer
     }
-  } else {
+  } else {                                                         // If its not in the time window, make sure c02 is off
     turnOffC02();
   }
-   
+
 }
 
-// Reads the raw sensor value and stores it in the buffer, then advance buffwe for next reading
+// Reads the raw sensor value and stores it in the buffer, then advance buffer for next reading
 void PH::readPhRawToBuffer() {
+  if (_phIndex >= _bufSize) {
+    _phIndex=0;
+  }
   if (_phIndex < _bufSize) {                // Bounds checking
     _buf[_phIndex] = analogRead(_phPin);    // store anolg value into buffer position
     _phIndex++;                             // Advance buffer to next position
@@ -107,7 +119,6 @@ void PH::processPhBuffer() {
       //Serial.println(_currentPh);
 
       _prevPhTime = millis();                              // Reset the timer and buffer index
-      _phIndex = 0;                                        // Reset Buffer
       _newPh = true;                                       // Set new PH Flag
     }
   }
@@ -121,16 +132,13 @@ void PH::processPhBuffer() {
 // After waiting for the probe to stabilize, a reading is taken and stored, then we do both again for the second solution.
 // Once we have both values we convert them to a PH value and then store both sets of targets and actuals.
 
-void PH::calibratePH(unsigned long currentTime, float* target) {
+void PH::calibratePH() {
 
   static bool haveFirstPoint = false;           // flag so we know if we are on first or second cal point
-  static bool pointsReady = false;              // Do we have both calibration points
-  static float actual[2];                       // Temp cal data
 
   if (_calibrationMode) {
-    //Serial.println(F("PH Calibration Mode"));
 
-    Serial.println(F("Waiting for PH to stabilize..."));
+    Serial.println(F("PH Calibration Mode..."));
 
     if (millis() - _prevPhTime >= _phData.phStabilizeDelay) {       // Timer to wait for stabilization period before reading ph
       int phVol = 0;
@@ -138,21 +146,27 @@ void PH::calibratePH(unsigned long currentTime, float* target) {
 
         Serial.println(F("Reading Actual 1"));
         _phIndex = 0;
+        
         readPhRawToBuffer();                                   // Read raw ph value and add to buffer
+        
         phVol = (float)_buf[0] * 5.0 / 1024;                   // Convert to mv and store
-        actual[0] = -5.70 * phVol + 21.34;                     // convert millivolts to PH reading without calibration
+        setCalActual (0, (-5.70 * phVol + 21.34));                     // convert millivolts to PH reading without calibration
+        
         _prevPhTime == millis();  // reset PH timer
+        haveFirstPoint = true;    // Flag the first point as done
 
       } else {
 
         Serial.println(F("Reading Actual 2"));
         readPhRawToBuffer();                                   // Reset buffer index
-        phVol = (float)_buf[0] * 5.0 / 1024;                   // Convert to mv and store
-        actual[1] = -5.70 * phVol + 21.34;                     // convert millivolts to PH reading without calibration
+        phVol = (float)_buf[1] * 5.0 / 1024;                   // Convert to mv and store
+        setCalActual(1,(-5.70 * phVol + 21.34));                     // convert millivolts to PH reading without calibration
 
-        pointsReady = true;          // we have both points
-        _prevPhTime = millis();        // reset PH timer
-        setCalPoints(target, actual);  // Set calibration points
+        _prevPhTime = millis();        // reset PH timer 
+        _phIndex = 0;                  // Reset index so we can start getting ph readings again
+        
+        calculateCalibration();        // Calculate Calibration Offset
+        
         haveFirstPoint = false;        // Reset flag so we grab first point next time
         _calibrationMode = false;      // Reset flag to exit Calibration Mode
 
@@ -161,11 +175,6 @@ void PH::calibratePH(unsigned long currentTime, float* target) {
   }
 }
 
-// Set calibration points
-// Example: PH::setCalPoints(calPoints[] , calReadVal[]);
-void PH::setCalPoints(float * calTarget, float * calActual) {
-  _phData.phCalValue = (( calTarget[0] - calActual[0] ) + ( calTarget[1] - calActual[1] )) / 2;
-}
 
 // Set resting PH as the current PH, only call once you know the C02 has offgassed, a
 // couple hours after c02 off should be plenty but i havent done any real life testing yet

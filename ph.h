@@ -5,9 +5,9 @@
  *******************************************************************************
  * This library is designed to allow you to monitor the PH inside your aquarium.
  * The value reported is actually an average of 10 readings spaced out over time,
- * and is the most recent reading. Using this PH reading we can then start adding 
- * c02 to the aquarium. This causes the PH to drop. By monitoring the ph before c02 
- * we can set a baseline to know how much the PH has dropped and by correlation, 
+ * and is the most recent calculated reading. Using this PH reading we can then start 
+ * adding  c02 to the aquarium. This causes the PH to drop. By monitoring the ph before 
+ * c02 we can set a baseline to know how much the PH has dropped and by correlation, 
  * how much c02 has been added to the water. This code assumes a settable KH Hardness 
  * (in degrees) so please dont use PH altering products for the most accurate readings. 
  * to account for changes to the aquarium over time, we will remeasure the baseline 
@@ -59,6 +59,8 @@ struct PHData  {
   float khHardness = 4.0;                     // KH hardness of your tank
   unsigned long c02OnTime;
   unsigned long c02OffTime;
+  unsigned long c02OffgasDelay = 1000 * 60 * 60 * 2;      // Offgas delay, starts at 2 hours, plan to learn this based off PH readings
+  unsigned long c02BuildupTime = 1000 * 60 *30;           // How long before lights should we turn on C02
 };
 
 class PH {
@@ -73,23 +75,26 @@ class PH {
     void loop(unsigned long ssm);
 
     // PH Methods
-    void calibratePH(unsigned long currentTime, float* target);                     // PH Calibration Mode, gets calibration points
+    void calibratePH();                     // PH Calibration Mode, gets calibration points
     void readPhRawToBuffer();                                                       // Adds a new ph reading to the buffer
     void processPhBuffer();                                                         // Average readings and convert to actual PH value
     
+    // PH getters and setters
     void setTargetPH(float newTarget) { _targetPh = newTarget; };
     float getTargetPH() { return _targetPh; };
     
     void setPHDelay(unsigned long newDelay) { _phData.checkPhDelay = newDelay; };
     unsigned long getPHDelay() { return _phData.checkPhDelay; };
+
+    float getCurrentPH() { return _currentPh; };                                    // Get most recently calculated PH
     
-    float getCurrentPH() { return _currentPh; };
-    
-    void setCalPoints(float* calTarget, float* calActual);                          // Set the calibration points
+    void setCalPoints();                          // Set the calibration points
+    float calculateCalibration(){ _phData.phCalValue = (( _calTarget[0] - _calActual[0] ) + ( _calTarget[1] - _calActual[1] )) / 2; };
+    void setCalTarget(int index, float calTarget) { _calTarget[index] = calTarget; };
+    void setCalActual(int index, float calActual) { _calActual[index] = calActual; };
 
 
-
-    // C02 Methods
+    // C02 Methods - May make its own class
     void calculateRestingPh();                // PH after some time of c02 off, thinking maybe set 2 hours before light on
     void calculateTargetPh();                 // Calculate Target PH for needed c02 levels based on calculated resting ph
     int calculateC02PPM();                    // Calculate the PPM of c02 based on PH
@@ -99,6 +104,8 @@ class PH {
 
     float getRestingPh() { return _phData.restingPh; };
     void setRestingPh(float restingPh) { _phData.restingPh = restingPh; };
+
+  
     
     float getC02PhTarget() { return _phData.targetPhC02; };
     void setC02PhTarget(float c02PhTarget) { _phData.targetPhC02 = c02PhTarget; };
@@ -112,6 +119,12 @@ class PH {
     float getkhHardness () { return _phData.khHardness; };
     void setKhHardness (float khHardness) { _phData.khHardness = khHardness; };
 
+    unsigned long getC02OnTime() { return _phData.c02OnTime; } ;
+    void setC02OnTime(unsigned long onTime) { _phData.c02OnTime; };
+
+    unsigned long getC02OffTime() { return _phData.c02OffTime; } ;
+    void setC02OffTime(unsigned long onTime) { _phData.c02OffTime; };
+
     bool isC02On() { return _c02On; };
 
   private:
@@ -124,13 +137,15 @@ class PH {
     unsigned long _prevPhTime = 0;    // When did we last read PH sensor
     int _buf[_bufSize], _temp;        // Buffer to average results. Size determined by const int _bufSize
     bool _calibrationMode = false;    // Flag to tell when we should be in PH calibration mode
+    float _calTarget[2];
+    float _calActual[2];
     float _currentPh;                 // What is the current ph value
     int _phIndex = 0;                 // Index for PH buffer
     bool _newPh = true;               // Flag to tell when we have a new ph reading  
     bool _needRestingPh = false;      // Flag for when its time to get the resting ph
     bool _c02On = false;              // Flag for C02 being on
     int _currentC02PPM;               // Stores current ppm of c02 based on ph drop
-    float _targetPh = 7.0;            // What PH are we targeting, will get changed based on c02 on or off
+    float _targetPh;                  // What PH are we targeting, will get changed based on c02 on or off
     unsigned long _prevC02Time = 0;   // When did we last check c02 in millis
     bool _co2On = false;              // Flag to tell state of c02
 
