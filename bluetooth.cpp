@@ -11,11 +11,11 @@
 BluetoothModule::BluetoothModule() {        // Constructor
   const byte numChars = 32;                 // incoming buffer
   bool newData = false;                  // do we need to process new data yet
-  bool newParse = false;
+  bool newParse = false;                 // Do we need to act on newly parsed data
 }
 
-void BluetoothModule::init() {              // Initialize a BT module
-  Serial.print(F("Initializing BT module..."));
+void BluetoothModule::setup() {              // Initialize a BT module
+  Serial.print(F("Initializing BT module..."));     // Place holder for AT Command setup
   Serial.println(F(" Done"));
 }
 

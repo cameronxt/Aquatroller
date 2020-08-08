@@ -6,11 +6,11 @@ PH::PH(byte phInputPin, byte c02OutputPin, RTC_DS3231 *rtc) :
   _c02Pin (c02OutputPin),   // C02 relay pin
   _rtc(rtc)
 {
-
+ // _phData.targetPh = 7.0;
 }
 
 // Initialization function
-void PH::init() {
+void PH::setup() {
   // TODO: Set initial variables if we find them stored in eeprom
 
   //    setRestingPh(float restingPh);
@@ -69,7 +69,7 @@ void PH::loop(unsigned long ssm) {
   // TODO: C02 Control
   if ((ssm > _phData.c02OnTime) && (ssm < _phData.c02OffTime)) {   // Is it time for the c02 to be on
     if (millis() - _prevC02Time >= _phData.checkC02Delay) {        // Timer for c02 control, keeps from cycling relay to quickly
-      if (_currentPh > _targetPh) {                                // PH is higher than target
+      if (_currentPh > _phData.targetPh) {                                // PH is higher than target
         turnOnC02();                                               // turn on c02
       } else {
         turnOffC02();                                              // otherwise turn it off

@@ -17,9 +17,9 @@ struct LightData {
   unsigned long testFadeDelay;
   unsigned long normalFadeDelay;
   byte mode = NORMAL;
-  unsigned long onTime;
-  unsigned long offTime;
-  int normalMaxBright;
+  unsigned long onTime = 16*60*60;
+  unsigned long offTime= 23*60*60;
+  int normalMaxBright = 4096 * .8;
 };
 
 class Light {
@@ -35,6 +35,9 @@ class Light {
 
     void init();
     void loop(unsigned long ssm);
+    
+    int getDataAddress() { return &_data; };        // Used to return pointer to the data for eeprom purposes
+    
     void normalLights(unsigned long ssm);
     void testLights(unsigned long ssm);
     void setMode(byte mode);

@@ -44,7 +44,8 @@ struct PHData  {
   int phPin = A0;   // PH Sensor Analog pin
   int C02Pin = 8;   // C02 relay pin
   byte bufSize = 10;    // Buffer size for PH values, 10 seems to work well
-  
+
+  float targetPh = 7.0;
   unsigned long checkPhDelay = 1000;        // Wait one second between Checks, this allows sensor to stabilize
   unsigned long phStabilizeDelay = 1000 * 60 * 2;    // Delay to wait for ph to fully stabilize
   float restingPh;                            // PH after several hours without c02
@@ -54,7 +55,7 @@ struct PHData  {
   
   // C02 Data
   unsigned long checkC02Delay = 30000;        // Delay before cycling c02 relay in millis
-  float targetPhC02;                          // PH target to know we have enough c02
+  float targetPhC02 = 7.0;                          // PH target to know we have enough c02
   int targetPPMC02 = 20;                      // PPM of c02 that we are requesting
   float khHardness = 4.0;                     // KH hardness of your tank
   unsigned long c02OnTime;
@@ -65,23 +66,25 @@ struct PHData  {
 
 class PH {
 
-  PHData _phData;
+  public: PHData _phData;
   RTC_DS3231 *_rtc;         // Create RTC pointer
 
   public:
     
     PH(byte phInputPin, byte c02OutputPin, RTC_DS3231 *rtc);
-    void init();
+    void setup();
     void loop(unsigned long ssm);
+
 
     // PH Methods
     void calibratePH();                     // PH Calibration Mode, gets calibration points
     void readPhRawToBuffer();                                                       // Adds a new ph reading to the buffer
     void processPhBuffer();                                                         // Average readings and convert to actual PH value
+    int getDataAddress() { return &_phData; };
     
     // PH getters and setters
-    void setTargetPH(float newTarget) { _targetPh = newTarget; };
-    float getTargetPH() { return _targetPh; };
+    void setTargetPH(float newTarget) { _phData.targetPh = newTarget; };
+    float getTargetPH() { return _phData.targetPh; };
     
     void setPHDelay(unsigned long newDelay) { _phData.checkPhDelay = newDelay; };
     unsigned long getPHDelay() { return _phData.checkPhDelay; };
@@ -132,22 +135,23 @@ class PH {
     // Class Variables
     const int _phPin;   // PH Sensor Analog pin
     const int _c02Pin;   // C02 relay pin
-    int _sensorValue = 0;             // Direct Sensor Value (0-1024)
-    unsigned long _avgValue = 0;      // Calculated average
-    unsigned long _prevPhTime = 0;    // When did we last read PH sensor
+    int _sensorValue;             // Direct Sensor Value (0-1024)
+    unsigned long _avgValue;      // Calculated average
+    unsigned long _prevPhTime;    // When did we last read PH sensor
     int _buf[_bufSize], _temp;        // Buffer to average results. Size determined by const int _bufSize
     bool _calibrationMode = false;    // Flag to tell when we should be in PH calibration mode
     float _calTarget[2];
     float _calActual[2];
     float _currentPh;                 // What is the current ph value
-    int _phIndex = 0;                 // Index for PH buffer
+    int _phIndex;                 // Index for PH buffer
     bool _newPh = true;               // Flag to tell when we have a new ph reading  
     bool _needRestingPh = false;      // Flag for when its time to get the resting ph
     bool _c02On = false;              // Flag for C02 being on
     int _currentC02PPM;               // Stores current ppm of c02 based on ph drop
-    float _targetPh;                  // What PH are we targeting, will get changed based on c02 on or off
-    unsigned long _prevC02Time = 0;   // When did we last check c02 in millis
+    //float _targetPh;                  // What PH are we targeting, will get changed based on c02 on or off
+    unsigned long _prevC02Time;   // When did we last check c02 in millis
     bool _co2On = false;              // Flag to tell state of c02
+   // int* dataPtr;
 
 };
 

@@ -24,7 +24,7 @@ struct BTSettings {
 class BluetoothModule {
   public:
     BluetoothModule();
-    void init();
+    void setup();
     void loop();
 
     bool newParse;              // True when data has been parsed, but not retrieved

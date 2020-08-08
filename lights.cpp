@@ -17,7 +17,7 @@ void Light::init() {
   for (int i = 0; i < 6; i++) {
     _pwm->setPin(i, 0, 0); // turn all channels off
   }
-  _data.normalMaxBright = 4096 * .55;
+
 }
 
 // Main loop function.
