@@ -42,11 +42,11 @@ void setup() {
   Serial.begin(9600);
 
   // Reset EEPROM
-//  Serial.println(F("Clearing EEPROM..."));
-//  for(int i = 0; i < 1024; i++) {
-//    EEPROM.put(i,0);
-//  }
-//  Serial.println(F("EEPROM Cleared"));
+  //  Serial.println(F("Clearing EEPROM..."));
+  //  for(int i = 0; i < 1024; i++) {
+  //    EEPROM.put(i,0);
+  //  }
+  //  Serial.println(F("EEPROM Cleared"));
 
   Serial.println(F("Initial Values"));
   Serial.println(eeprom._eepromMap.checkVar);
@@ -68,16 +68,16 @@ void setup() {
   Serial.println(ph.getTargetPH());
   Serial.println();
 
-//  eeprom._eepromMap.checkVar = 5;
-//  ph.setTargetPH(6.5);
-//  ph._phData.phPin = A1;
-//  eeprom.updateSettings();
-//
-//  Serial.println(F("Altered Values"));
-//  Serial.println(eeprom._eepromMap.checkVar);
-//  Serial.println(ph._phData.phPin);
-//  Serial.println(ph.getTargetPH());
-//  Serial.println();
+  //  eeprom._eepromMap.checkVar = 5;
+  //  ph.setTargetPH(6.5);
+  //  ph._phData.phPin = A1;
+  //  eeprom.updateSettings();
+  //
+  //  Serial.println(F("Altered Values"));
+  //  Serial.println(eeprom._eepromMap.checkVar);
+  //  Serial.println(ph._phData.phPin);
+  //  Serial.println(ph.getTargetPH());
+  //  Serial.println();
 
 }
 

@@ -56,7 +56,7 @@ void EepromAccess::updateSettings() {           // Updates(not write) eeprom wit
 }
 
 void EepromAccess::getSettings() {
-  
+
   EEPROM.get(settingsAddressEEPROM, _eepromMap);
   EEPROM.get(phAddressEEPROM, *_phData );
   EEPROM.get(lightAddressEEPROM, _lightData);

@@ -6,7 +6,7 @@ PH::PH(byte phInputPin, byte c02OutputPin, RTC_DS3231 *rtc) :
   _c02Pin (c02OutputPin),   // C02 relay pin
   _rtc(rtc)
 {
- // _phData.targetPh = 7.0;
+  // _phData.targetPh = 7.0;
 }
 
 // Initialization function
@@ -25,7 +25,7 @@ void PH::setup() {
   //
   //    setCalPoints(float calTarget[], float calActual[]);
 
-  
+
   // pinModes and whatnot
 }
 
@@ -85,7 +85,7 @@ void PH::loop(unsigned long ssm) {
 // Reads the raw sensor value and stores it in the buffer, then advance buffer for next reading
 void PH::readPhRawToBuffer() {
   if (_phIndex >= _bufSize) {
-    _phIndex=0;
+    _phIndex = 0;
   }
   if (_phIndex < _bufSize) {                // Bounds checking
     _buf[_phIndex] = analogRead(_phPin);    // store anolg value into buffer position
@@ -146,12 +146,12 @@ void PH::calibratePH() {
 
         Serial.println(F("Reading Actual 1"));
         _phIndex = 0;
-        
+
         readPhRawToBuffer();                                   // Read raw ph value and add to buffer
-        
+
         phVol = (float)_buf[0] * 5.0 / 1024;                   // Convert to mv and store
         setCalActual (0, (-5.70 * phVol + 21.34));                     // convert millivolts to PH reading without calibration
-        
+
         _prevPhTime == millis();  // reset PH timer
         haveFirstPoint = true;    // Flag the first point as done
 
@@ -160,13 +160,13 @@ void PH::calibratePH() {
         Serial.println(F("Reading Actual 2"));
         readPhRawToBuffer();                                   // Reset buffer index
         phVol = (float)_buf[1] * 5.0 / 1024;                   // Convert to mv and store
-        setCalActual(1,(-5.70 * phVol + 21.34));                     // convert millivolts to PH reading without calibration
+        setCalActual(1, (-5.70 * phVol + 21.34));                    // convert millivolts to PH reading without calibration
 
-        _prevPhTime = millis();        // reset PH timer 
+        _prevPhTime = millis();        // reset PH timer
         _phIndex = 0;                  // Reset index so we can start getting ph readings again
-        
+
         calculateCalibration();        // Calculate Calibration Offset
-        
+
         haveFirstPoint = false;        // Reset flag so we grab first point next time
         _calibrationMode = false;      // Reset flag to exit Calibration Mode
 
