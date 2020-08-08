@@ -4,18 +4,20 @@
 EepromAccess::EepromAccess(PHData *phData, LightData *lightData): _phData(phData), _lightData(lightData)
 {}
 
-void EepromAccess::saveSettings(EMap* eMap) {         // Write Settings to EEPROM
-  EEPROM.put(0, *eMap);
+void EepromAccess::saveMap() {         // Write Settings to EEPROM
+  EEPROM.put(settingsAddressEEPROM, _eepromMap);
 }
 
-void EepromAccess::getSettings(EMap *savedMap) {       // Read Settings From EEPROM
-  EEPROM.get(0, *savedMap);
+EMap EepromAccess::getMap() {       // Read Settings From EEPROM
+  EMap eMap;
+  EEPROM.get(settingsAddressEEPROM, eMap);
+  return eMap;
 }
 
 
-bool EepromAccess::checkForSettings (EMap *checkMap) {
+bool EepromAccess::checkForSettings (EMap checkMap) {
 
-  if (strstr(checkMap->VERSION, _eepromMap.VERSION)) {         // If previous version is found, then true
+  if (strstr(checkMap.VERSION, _eepromMap.VERSION)) {         // If previous version is found, then true
     Serial.println(F("Previous config found..."));
     return true;
   } else {                                        // else false
@@ -27,22 +29,21 @@ bool EepromAccess::checkForSettings (EMap *checkMap) {
 // TODO: Check for settings in eeprom and load into memory if there
 void EepromAccess::setup() {                      // Check for previous config, if not found generate new one
 
-  EMap tempMap;                                           // New Temporary EEPROM map
-  getSettings(&tempMap);                                  // Read settings from eeprom
+  EMap tempMap = getMap();;                                      // New Temporary EEPROM map
+  //getMap();                                  // Read settings from eeprom
 
-  if (checkForSettings(&tempMap))  {                      // If the EEPROM contains previous data
+  if (checkForSettings(tempMap))  {                      // If the map from EEPROM contains previous data
     Serial.println(F("Loading Settings from EEPROM"));
-    _eepromMap = tempMap;                                  // Load it
+    //_eepromMap = getMap();                                  // Load it
 
-    getSelectEeprom(PH_SETTINGS);       // Read Settings From EEPROM
-    getSelectEeprom(LIGHT_SETTINGS);
+    getSettings();
 
     //getSettings(*_lightData);      // Read Settings From EEPROM
 
   } else {                                                // Otherwise, config as defaults
     Serial.print(F("Generating new config..."));
     _eepromMap = EMap();                                   // Create default structure
-    saveSettings(&_eepromMap);                             // Sets everything to default values
+    updateSettings();                             // Sets everything to default values
     Serial.println(F(" Done"));
   }
 }
@@ -51,13 +52,14 @@ void EepromAccess::setup() {                      // Check for previous config, 
 void EepromAccess::updateSettings() {           // Updates(not write) eeprom with new values
   EEPROM.put(settingsAddressEEPROM, _eepromMap);
   EEPROM.put(phAddressEEPROM, *_phData );
-  EEPROM.put(lightAddressEEPROM, *_lightData);
+  EEPROM.put(lightAddressEEPROM, _lightData);
 }
 
 void EepromAccess::getSettings() {
-  EEPROM.put(settingsAddressEEPROM, _eepromMap);
-  EEPROM.put(phAddressEEPROM, *_phData );
-  EEPROM.put(lightAddressEEPROM, *_lightData);
+  
+  EEPROM.get(settingsAddressEEPROM, _eepromMap);
+  EEPROM.get(phAddressEEPROM, *_phData );
+  EEPROM.get(lightAddressEEPROM, _lightData);
 }
 
 void EepromAccess::loop() {

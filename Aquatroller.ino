@@ -21,7 +21,7 @@ BluetoothModule bt;     // Create bt instance
 SDAccess sd;            // create SD card instance
 RTC_DS3231 rtc;         // Create RTC instance
 
-PH phControl(A0, 8, &rtc);     // Create Ph Controller - Inputs = (PH Input Pin, C02 Relay Trigger Pin, Pointer to RTC)
+PH ph(A0, 8, &rtc);     // Create Ph Controller - Inputs = (PH Input Pin, C02 Relay Trigger Pin, Pointer to RTC)
 
 // PWM and LEDS
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();  // Setup PWM Driver
@@ -32,7 +32,7 @@ OneWire oneWire;                            // Setup onewire connection for comm
 DallasTemperature tempSensors(&oneWire);    // tell temp sensor library to use oneWire to talk to sensors
 Temp temp(&tempSensors);                    // Tell the temp control library which sensors to use
 
-EepromAccess eeprom(phControl.getDataAddress(),light.getDataAddress());    // Create eepromAccess class, send it a reference of everything that needs saved
+EepromAccess eeprom(ph.getDataAddress(), light.getDataAddress());   // Create eepromAccess class, send it a reference of everything that needs saved
 
 // constants for seconds in standard units of time
 const unsigned long SecondsPerHour = 60UL * 60;
@@ -40,12 +40,45 @@ const unsigned long SecondsPerMinute = 60;
 
 void setup() {
   Serial.begin(9600);
-  setupRTC();         // setup routine, gets time from RTC and sets it in the sketch
+
+  // Reset EEPROM
+//  Serial.println(F("Clearing EEPROM..."));
+//  for(int i = 0; i < 1024; i++) {
+//    EEPROM.put(i,0);
+//  }
+//  Serial.println(F("EEPROM Cleared"));
+
+  Serial.println(F("Initial Values"));
+  Serial.println(eeprom._eepromMap.checkVar);
+  Serial.println(ph._phData.phPin);
+  Serial.println(ph.getTargetPH());
+  Serial.println();
+
+  // setupRTC();         // setup routine, gets time from RTC and sets it in the sketch
   eeprom.setup();      // Check for existing save, load if found, else generate new save and populate with default values
-  bt.init();          // init bluetooth comms
-  sd.init();          // init sd card, TODO: if card not present dont try to log
-  light.init();       // set initial state and begin running routines
-  phControl.init();
+  // bt.setup();          // init bluetooth comms
+  //sd.init();          // init sd card, TODO: if card not present dont try to log
+  // light.init();       // set initial state and begin running routines
+  ph.setup();
+
+  Serial.println();
+  Serial.println(F("Loaded Values"));
+  Serial.println(eeprom._eepromMap.checkVar);
+  Serial.println(ph._phData.phPin);
+  Serial.println(ph.getTargetPH());
+  Serial.println();
+
+//  eeprom._eepromMap.checkVar = 5;
+//  ph.setTargetPH(6.5);
+//  ph._phData.phPin = A1;
+//  eeprom.updateSettings();
+//
+//  Serial.println(F("Altered Values"));
+//  Serial.println(eeprom._eepromMap.checkVar);
+//  Serial.println(ph._phData.phPin);
+//  Serial.println(ph.getTargetPH());
+//  Serial.println();
+
 }
 
 void loop() {
@@ -53,10 +86,10 @@ void loop() {
   unsigned long currentTime = millis();
   //bt.loop();          // Check for and save valid packets
 
- // if (bt.newParse) {              // If we have a new parsed packet
+  // if (bt.newParse) {              // If we have a new parsed packet
   //  decodePacket(bt.parsedData);  // Decode and perform correct call
- //   bt.newParse = false;          // Set to false so we can get a new packet
- // }
+  //   bt.newParse = false;          // Set to false so we can get a new packet
+  // }
 
 
 
@@ -64,7 +97,7 @@ void loop() {
 
   //temp.loop(currentTime);
   //light.loop(getTimeInSeconds(0, 0, 0));  // Run light controls, it needs to know the current time
-  phControl.loop(currentTime);
+  ph.loop(currentTime);
   //eeprom.loop();
   // Timer functions
   // unsigned long currentTime =
@@ -75,8 +108,34 @@ void decodePacket(BTParse data) { // Decides which actions should be taken on in
 
   switch (data.primary) {
     case 0: // EEPROM
+      switch (data.option) {
+        case 0: // Target EEPROM Actions
+          switch (data.subOption) {
+            case 0:
+              //ph.getTargetPH();
+              break;
+
+            case 1:
+              //ph.setTargtPH(data.value);
+              break;
+          }
+          break;
+      }
       break;
-    case 1: // LED
+    case 1: // LED's
+      switch (data.option) {
+        case 0: // Target LED Settings
+          switch (data.subOption) {
+            case 0:
+
+              break;
+
+            case 1:
+              //ph.setTargtPH(data.value);
+              break;
+          }
+          break;
+      }
       break;
     case 2: // SD Card
       break;
@@ -99,7 +158,7 @@ void decodePacket(BTParse data) { // Decides which actions should be taken on in
       break;
   }
 
-  
+
 }
 
 void setupRTC() {

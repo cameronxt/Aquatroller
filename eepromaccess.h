@@ -1,3 +1,17 @@
+/*
+ * EEPROM Access by Cameron Tibbits
+ * 
+ * Library for writing structs to the internal eeprom
+ * all other classes will pass a pointer to their data
+ * strutures. This class hast a setup()function that 
+ * will check the eeprom for previous Data with the correct
+ * version number. If we find one then those values will 
+ * be loaded into ram. If there is no previous config it 
+ * will generate a new map with default value. Default values
+ * are determined by their parent class.
+ * 
+ */
+
 #ifndef eeproma_h
 #define eeproma_h
 #include "Arduino.h"
@@ -5,9 +19,7 @@
 #include "ph.h"
 #include "lights.h"
 
-const int settingsAddressEEPROM = 0;
-const int phAddressEEPROM = sizeof(settingsAddressEEPROM) + 1;                  // Address offset for PH data
-const int lightAddressEEPROM = sizeof(phAddressEEPROM) + phAddressEEPROM + 1;   // Address offset for Light data
+
   
 enum EEPROM_SELECT {
   NONE,
@@ -19,13 +31,16 @@ enum EEPROM_SELECT {
 
 struct EMap {           // Struct to store all of eeprom settings
 
-  char VERSION[4] = "AA1";     // number to check and see if storage is valid
+  char VERSION[4] = "AA3";     // number to check and see if storage is valid
+  int checkVar = 1;
 
   // Partition Map: holds start address of each stored struct in EEPROM
 
 };
 
-
+const int settingsAddressEEPROM = 0;
+const int phAddressEEPROM = sizeof(EMap) + 1;                  // Address offset for PH data
+const int lightAddressEEPROM = sizeof(PHData) + phAddressEEPROM + 1;   // Address offset for Light data
 
 class EepromAccess {
 
@@ -40,16 +55,16 @@ class EepromAccess {
     void updateSettings();
     void getSettings();
   private:
-    bool checkForSettings (EMap *checkMap);
+    bool checkForSettings (EMap checkMap);
     bool settingsChanged;
-    void saveSettings(EMap* eMap);
-    void getSettings (EMap* savedMap);
+    void saveMap();
+    EMap getMap ();
     
     bool _needsUpdated = false;   // Flag for when to write new data
     
 
 
-    EMap _eepromMap;
+  public:  EMap _eepromMap;
     EEPROM_SELECT _settingSelect; // Which Data to get or retrieve
     PHData* _phData;              // Pointer to PH Data to be stored
     LightData* _lightData;        // Pointer to Light Data to be stored
