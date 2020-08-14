@@ -1,3 +1,5 @@
+// TODO: Getters and setters for bluetooth control
+
 #ifndef temp_h
 #define temp_h
 #include "Arduino.h"
@@ -27,12 +29,17 @@ class Temp {
     Temp(DallasTemperature* _temp);
     void init();
     void loop(unsigned long currentTime);
-    unsigned long getHeaterDelay();
-    void setHeaterDelay(unsigned long newDelay);
-    unsigned long getTempDelay();
-    void setTempDelay(unsigned long newDelay);
+
     float getTargetTemp();
     void setTargetTemp(float newTemp);
+    
+    unsigned long getHeaterDelay();
+    void setHeaterDelay(unsigned long newDelay);
+    
+    unsigned long getTempDelay();
+    void setTempDelay(unsigned long newDelay);
+    
+    TemperatureData* getDataAddress() { return &tempData; };
 
   private:
     OneWire* _wire;

@@ -1,3 +1,7 @@
+// TODO: Figure out how im going to store data
+// TODO: Figure out data layout
+// TODO:? backup/restore eeprom?
+
 #ifndef sdaccess_h
 #define sdaccess_h
 #include "Arduino.h"
