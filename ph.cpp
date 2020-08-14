@@ -11,22 +11,12 @@ PH::PH(byte phInputPin, byte c02OutputPin, RTC_DS3231 *rtc) :
 
 // Initialization function
 void PH::setup() {
-  // TODO: Set initial variables if we find them stored in eeprom
-
-  //    setRestingPh(float restingPh);
-  //
-  //    setC02PhTarget(float c02PhTarget);
-  //
-  //    setTargetPhDrop(float targetPhC02);
-  //
-  //    setTargetPPMC02 (int targetPPM);
-  //
-  //    setKhHardness (float khHardness);
-  //
-  //    setCalPoints(float calTarget[], float calActual[]);
+  Serial.print(F("Initializing PH..."));
+  pinMode(_c02Pin, OUTPUT);               // Setup heater pin as output
+  digitalWrite(_c02Pin, HIGH);            // Turn it off
+  Serial.println(F("Done"));
 
 
-  // pinModes and whatnot
 }
 
 /* Loop function, place in your main loop() of your sketch.
@@ -42,17 +32,29 @@ void PH::setup() {
 */
 // TODO: C02 Control && Getting resting PH
 void PH::loop(unsigned long ssm) {
+  //      Serial.print(F("PH Loop: "));
+  //      Serial.print(millis());
+  //
+  //      Serial.print(" | ");
+  //      Serial.print(_prevPhTime);
+  //      Serial.print(" | ");
+  //      Serial.print(millis() - _prevPhTime);
+  //      Serial.print(" | ");
+  //      Serial.println(_phData.checkPhDelay);
 
   // Timer so we only read ph every so often
   if (millis() - _prevPhTime >= _phData.checkPhDelay) {
-
+    //Serial.println(F("Time to check PH"));
     //Serial.println(F("its time to check it"));
-    if (!_calibrationMode) {                        // Dont read ph during calibration so probe stabilize without interrupt
+    if (!_calibrationMode ) {                        // Dont read ph during calibration so probe stabilize without interrupt
+      // Serial.println(F("PH Monitor Mode"));
       readPhRawToBuffer();                          // read raw data and store it to an array
       _prevPhTime = millis();                       // update PH timer to allow sensor to stabilize before next reading
       processPhBuffer();                            // Average and calculate new PH value
     } else {
-      calibratePH();
+
+      Serial.println(F("Calibration Mode"));
+      calibratePh();
     }
 
   }
@@ -67,17 +69,25 @@ void PH::loop(unsigned long ssm) {
 
 
   // TODO: C02 Control
-  if ((ssm > _phData.c02OnTime) && (ssm < _phData.c02OffTime)) {   // Is it time for the c02 to be on
-    if (millis() - _prevC02Time >= _phData.checkC02Delay) {        // Timer for c02 control, keeps from cycling relay to quickly
-      if (_currentPh > _phData.targetPh) {                                // PH is higher than target
-        turnOnC02();                                               // turn on c02
-      } else {
-        turnOffC02();                                              // otherwise turn it off
-      }
-      _prevC02Time = millis();                                     // Reset timer
+  //if ((ssm > _phData.c02OnTime) && (ssm < _phData.c02OffTime)) {   // Is it time for the c02 to be on
+  if (millis() - _prevC02Time >= _phData.checkC02Delay) {        // Timer for c02 control, keeps from cycling relay to quickly
+    Serial.println("Checking C02 Levels");
+    //Serial.println(_prevPhTime);
+    if (_currentPh > _phData.targetPh) {                                // PH is higher than target
+
+      Serial.println(F("Turning C02: ON"));
+      turnOnC02();                                               // turn on c02
+    } else {
+
+      Serial.println(F("Turning C02: OFF"));
+      turnOffC02();                                              // otherwise turn it off
     }
+    _prevC02Time = millis();                                     // Reset timer
+    //}
   } else {                                                         // If its not in the time window, make sure c02 is off
-    turnOffC02();
+    // Serial.println(F("Turning C02: OFF - Catch"));
+
+    //turnOffC02();
   }
 
 }
@@ -89,6 +99,10 @@ void PH::readPhRawToBuffer() {
   }
   if (_phIndex < _bufSize) {                // Bounds checking
     _buf[_phIndex] = analogRead(_phPin);    // store anolg value into buffer position
+    //            Serial.print(F("Raw Buffer Value #"));
+    //        Serial.print(_phIndex+1);
+    //        Serial.print(F(": "));
+    //        Serial.println(_buf[_phIndex]);
     _phIndex++;                             // Advance buffer to next position
   }
 }
@@ -96,9 +110,9 @@ void PH::readPhRawToBuffer() {
 // Called when buffer is full.
 void PH::processPhBuffer() {
 
-  if (_phIndex == _bufSize) {                    // if buffer is full, lets calculate average value
-    for (int i = 0; i < (_bufSize - 1); i++) {   // First lets sort our results
-      for (int j = i + 1; j < _bufSize; j++) {
+  if (_phIndex >= _bufSize) {                // if buffer is full, lets calculate average value
+    for (int i = 0; i < (_bufSize); i++) {   // First lets sort our results
+      for (int j = i + 2; j < _bufSize - 1; j++) {
         if (_buf[i] > _buf[j]) {
           _temp = _buf[i];
           _buf[i] = _buf[j];
@@ -106,21 +120,29 @@ void PH::processPhBuffer() {
         }
 
       }
-
-      _avgValue = 0;                                               // Reset average value
-      for (int i = 1; i < _bufSize - 1; i++) _avgValue += _buf[i]; // Drop highest and lowest value, add the rest together
-
-      float pHVol = (float)_avgValue * 5.0 / 1024 / 8;        // average and convert to milli-volts
-      _currentPh = -5.70 * (float)pHVol + 21.34 + (float)_phData.phCalValue;                     // convert millivolts to PH reading
-
-      // TODO: add calibration into reading
-
-      //Serial.print("PH = ");
-      //Serial.println(_currentPh);
-
-      _prevPhTime = millis();                              // Reset the timer and buffer index
-      _newPh = true;                                       // Set new PH Flag
     }
+
+
+    _avgValue = 0;                                        // Reset average value
+    for (int i = _dropMe; i < _bufSize - _dropMe; i++) {  // Drop highest and lowest value(s), add the rest together
+
+      _avgValue += _buf[i];
+
+      //        Serial.print(F("Running average: "));
+      //        Serial.println(_avgValue);
+
+    }
+
+
+    float pHVol = ((float)_avgValue * 5.0 / 1024) / (_bufSize - (_dropMe * 2));    // average and convert to milli-volts
+    _currentPh = -5.70 * (float)pHVol + 21.34 + (float)_phData.phCalValue;                     // convert millivolts to PH reading
+
+    // TEST
+    Serial.print("PH = ");
+    Serial.println(_currentPh);
+
+    _prevPhTime = millis();                              // Reset the timer and buffer index
+    _newPh = true;
   }
 }
 
@@ -132,7 +154,7 @@ void PH::processPhBuffer() {
 // After waiting for the probe to stabilize, a reading is taken and stored, then we do both again for the second solution.
 // Once we have both values we convert them to a PH value and then store both sets of targets and actuals.
 
-void PH::calibratePH() {
+void PH::calibratePh() {
 
   static bool haveFirstPoint = false;           // flag so we know if we are on first or second cal point
 
@@ -150,7 +172,7 @@ void PH::calibratePH() {
         readPhRawToBuffer();                                   // Read raw ph value and add to buffer
 
         phVol = (float)_buf[0] * 5.0 / 1024;                   // Convert to mv and store
-        setCalActual (0, (-5.70 * phVol + 21.34));                     // convert millivolts to PH reading without calibration
+        setCalActual (0, (-5.70 * phVol + 21.34));             // convert millivolts to PH reading without calibration
 
         _prevPhTime == millis();  // reset PH timer
         haveFirstPoint = true;    // Flag the first point as done
@@ -199,13 +221,16 @@ void PH::calculateTargetPh() {
 }
 
 void PH::turnOnC02() {
-  if (_co2On) {
+  if (!_co2On) {
     digitalWrite(_c02Pin, LOW);
+    _c02On = true;
+
   }
 }
 
 void PH::turnOffC02() {
-  if (!_c02On) {
+  if (_c02On) {
     digitalWrite(_c02Pin, HIGH);
+    _c02On = false;
   }
 }
