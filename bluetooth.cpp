@@ -1,4 +1,5 @@
 // Need to implement -
+// Store recieved Floats and longs correctly
 //Look for device
 //connect to device
 //send data from sd logs

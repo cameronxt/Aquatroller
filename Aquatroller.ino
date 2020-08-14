@@ -15,7 +15,7 @@
 #include <RTClib.h>
 #include "ph.h"
 
-
+void(* resetFunc) (void) = 0;     // Reset frunction
 
 BluetoothModule bt;     // Create bt instance
 SDAccess sd;            // create SD card instance
@@ -32,7 +32,7 @@ OneWire oneWire;                            // Setup onewire connection for comm
 DallasTemperature tempSensors(&oneWire);    // tell temp sensor library to use oneWire to talk to sensors
 Temp temp(&tempSensors);                    // Tell the temp control library which sensors to use
 
-EepromAccess eeprom(ph.getDataAddress(), light.getDataAddress());   // Create eepromAccess class, send it a reference of everything that needs saved
+EepromAccess eeprom(ph.getDataAddress(), light.getDataAddress(), temp.getDataAddress());   // Create eepromAccess class, send it a reference of everything that needs saved
 
 // constants for seconds in standard units of time
 const unsigned long SecondsPerHour = 60UL * 60;
@@ -41,148 +41,216 @@ const unsigned long SecondsPerMinute = 60;
 void setup() {
   Serial.begin(9600);
 
-  // Reset EEPROM
-  //  Serial.println(F("Clearing EEPROM..."));
-  //  for(int i = 0; i < 1024; i++) {
-  //    EEPROM.put(i,0);
-  //  }
-  //  Serial.println(F("EEPROM Cleared"));
-
-  Serial.println(F("Initial Values"));
-  Serial.println(eeprom._eepromMap.checkVar);
-  Serial.println(ph._phData.phPin);
-  Serial.println(ph.getTargetPH());
-  Serial.println();
-
-  // setupRTC();         // setup routine, gets time from RTC and sets it in the sketch
+  setupRTC();         // setup routine, gets time from RTC and sets it in the sketch
   eeprom.setup();      // Check for existing save, load if found, else generate new save and populate with default values
-  // bt.setup();          // init bluetooth comms
-  //sd.init();          // init sd card, TODO: if card not present dont try to log
-  // light.init();       // set initial state and begin running routines
+  bt.setup();          // init bluetooth comms
+  // sd.init();          // init sd card, TODO: if card not present dont try to log
+  light.init();       // set initial state and begin running routines
   ph.setup();
 
-  Serial.println();
-  Serial.println(F("Loaded Values"));
-  Serial.println(eeprom._eepromMap.checkVar);
-  Serial.println(ph._phData.phPin);
-  Serial.println(ph.getTargetPH());
-  Serial.println();
 
-  //  eeprom._eepromMap.checkVar = 5;
-  //  ph.setTargetPH(6.5);
-  //  ph._phData.phPin = A1;
-  //  eeprom.updateSettings();
-  //
-  //  Serial.println(F("Altered Values"));
-  //  Serial.println(eeprom._eepromMap.checkVar);
-  //  Serial.println(ph._phData.phPin);
-  //  Serial.println(ph.getTargetPH());
-  //  Serial.println();
-
+  Serial.println(F("Welcome to Aquatroller!"));
 }
 
 void loop() {
   // This is a non blocking bluetooth implementation. Thanks to Robin2's mega post for most of this code
   unsigned long currentTime = millis();
-  //bt.loop();          // Check for and save valid packets
+  bt.loop();          // Check for and save valid packets
 
-  // if (bt.newParse) {              // If we have a new parsed packet
-  //  decodePacket(bt.parsedData);  // Decode and perform correct call
-  //   bt.newParse = false;          // Set to false so we can get a new packet
-  // }
+  if (bt.newParse) {              // If we have a new parsed packet
+    decodePacket(bt.parsedData);  // Decode and perform correct call
+    bt.newParse = false;          // Set to false so we can get a new packet
+  }
 
 
 
 
 
   //temp.loop(currentTime);
-  //light.loop(getTimeInSeconds(0, 0, 0));  // Run light controls, it needs to know the current time
+  light.loop(getTimeInSeconds(0, 0, 0));  // Run light controls, it needs to know the current time
   ph.loop(currentTime);
-  //eeprom.loop();
+  eeprom.loop();
   // Timer functions
   // unsigned long currentTime =
+
+
 }
 
-
+// TODO: Testing to verify it all work
 void decodePacket(BTParse data) { // Decides which actions should be taken on input packet
 
   switch (data.primary) {
+    ////////// EEPROM Actions //////////////////
     case 0: // EEPROM
       switch (data.option) {
-        case 0: // Target EEPROM Actions
-          switch (data.subOption) {
-            case 0:
-              //ph.getTargetPH();
-              break;
-
-            case 1:
-              //ph.setTargtPH(data.value);
-              break;
-          }
+        case 0: // Get Data from EEPROM
           break;
       }
       break;
+    /////////////// LED Actions /////////////////
     case 1: // LED's
       switch (data.option) {
-        case 0: // Target LED Settings
-          switch (data.subOption) {
-            case 0:
-
-              break;
-
-            case 1:
-              //ph.setTargtPH(data.value);
-              break;
-          }
+        case 0: // Get Target LED Brightness
+          Serial.print(F("Target Brightness: "));                   //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          //light.getBright(data.subOption);
           break;
+        case 1: // Set target brightness                            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          // light.setBright((data.value, bt.parsedData.subOption);
+          break;
+        case 2: // Get Light Mode
+          Serial.print(F("Light Mode: "));
+          Serial.println(light.getMode());
+          break;
+        case 3: // Set Light Mode
+           light.setMode(data.value);
+          break;
+        case 4: // Get LED On Time
+          Serial.print(F("Light on time: "));
+          Serial.println(light.getOnTime());
+          break;
+        case 5: // Set LED on time
+          light.setOnTime(data.value);
+          break;
+        case 6: // Get LED Off Time
+          Serial.print(F("Light off time: "));
+          Serial.println(light.getOffTime(data.subOption));
+          break;
+        case 7: // Set LED Off time
+          light.setOffTime(data.value);
+          break;
+
       }
       break;
-    case 2: // SD Card
+    /////////////// SD Card Actions ////////////////
+    case 2:
       break;
-    case 3: // Bluetooth
+    /////////////// Bluetooth Actions //////////////
+    case 3:
       break;
-    case 4: // PH
+    /////////////// PH Actions /////////////////////
+    case 4:
       switch (data.option) {
-        case 0: // Target PH
-          switch (data.subOption) {
-            case 0:
-              //ph.getTargetPH();
-              break;
-
-            case 1:
-              //ph.setTargtPH(data.value);
-              break;
-          }
+        case 0: // Get target PH
+          Serial.print(F("Target PH: "));
+          Serial.println(ph.getTargetPh());
+          break;
+        case 1: // Set Target PH
+          ph.setTargetPh(data.value);
+          break;
+        case 2: // Get Heater delay time
+          Serial.print(F("PH Reading Delay: "));
+          Serial.println(ph.getPhDelay());
+          break;
+        case 3: // Set heater delay
+          ph.setPhDelay(data.value);
+          break;
+        case 4: // Get C02 PH Target
+          Serial.print(F("PH Target - C02: "));
+          Serial.println(ph.getC02PhTarget());
+          break;
+        case 5: // Set C02 PH Target
+          ph.setC02PhTarget(data.value);
+          break;
+        case 6: // Get target PH drop with c02
+          Serial.print(F("Target PH Drop with C02: "));
+          Serial.println(ph.getTargetPhDrop());
+          break;
+        case 7: // Set target PH drop with c02
+          ph.setTargetPhDrop(data.value);
+          break;
+        case 8: // Get target PPM C02
+          Serial.print(F("Target PPM C02: "));
+          Serial.println(ph.getTargetPPMC02());
+          break;
+        case 9: // Set PPM C02
+          ph.setTargetPPMC02(data.value);
+          break;
+        case 10: // Get Kh Hardness
+          Serial.print(F("Kh Hardness: "));
+          Serial.println(ph.getKhHardness());
+          break;
+        case 11: // Set Kh hardness
+          ph.setKhHardness(data.value);
+          break;
+        case 12: // Get c02 on time
+          Serial.print(F("C02 on time: "));
+          Serial.println(ph.getC02OnTime());
+          break;
+        case 13: // Set c02 on time
+          ph.setC02OnTime(data.value);
           break;
       }
       break;
+    //////////////// Temperature Actions ///////////////////////
+    case 5: // Temperature
+      switch (data.option) {
+
+        case 0: // Get target temperature
+          Serial.print(F("Target Temp: "));
+          Serial.println(temp.getTargetTemp());
+          break;
+        case 1: // Set Target Temp
+          temp.setTargetTemp(data.value);
+          break;
+        case 2:
+          Serial.print(F("Heater Delay: "));
+          Serial.println(temp.getHeaterDelay());
+          break;
+        case 3:
+          temp.setHeaterDelay(data.value);
+          break;
+        case 4:
+          Serial.print(F("Temperature Delay: "));
+          Serial.println(temp.getTempDelay());
+          break;
+        case 5:
+          temp.setTempDelay(data.value);
+          break;
+        case 6:
+          Serial.print(F("Target Temperature: "));
+          Serial.println(temp.getTargetTemp());
+          break;
+        case 7:
+          temp.setTargetTemp(data.value);
+          break;
+      }
+      break;
+    //////////// Time Actions ////////////////////////
+    case 6:
+      break;
+    //////////// Soft Reset /////////////////////////
+    case 9:
+      if (data.option == 9 && data.subOption == 9 && data.value ==1) {
+        resetFunc();
+        
+      }
   }
-
-
 }
+
+
 
 void setupRTC() {
 
-  if (rtc.lostPower()) {                    // check if battery died on RTC, if so lets set it to something
-    Serial.println(F("RTC lost power, lets set the time!"));
-
-    // following line sets the RTC to the date & time this sketch was compiled
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-
-    // This line sets the RTC with an explicit date & time, for example to set
-    // January 21, 2014 at 3am you would call:
-    //rtc.adjust(DateTime(2019, 4, 30, 23, 52, 0));
-  }
-  setSyncProvider(RTC.get);         //Sets our time keeper as the RTC
-  // setTime(RTC.get);              // Sets system time to RTC Time
-  setSyncInterval(5);               // number of seconds to go before requesting re-sync
-  if (timeStatus() != timeSet)
-    Serial.println(F("Unable to sync with the RTC"));
-  else
-    Serial.println(F("RTC has set the system time"));
   if (! rtc.begin()) {                      // try to startup RTC
     Serial.println(F("Couldn't find RTC"));
-    //while (1);                              // if you cant find it, fix and wait for reset
+  } else {
+    if (rtc.lostPower()) {                    // check if battery died on RTC, if so lets set it to something
+      Serial.println(F("RTC lost power, lets set the time!"));
+
+      // following line sets the RTC to the date & time this sketch was compiled
+      rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+
+      // This line sets the RTC with an explicit date & time, for example to set
+      // January 21, 2014 at 3am you would call:
+      //rtc.adjust(DateTime(2019, 4, 30, 23, 52, 0));
+    }
+    setSyncProvider(RTC.get);         //Sets our time keeper as the RTC
+    // setTime(RTC.get);              // Sets system time to RTC Time
+    setSyncInterval(5);               // number of seconds to go before requesting re-sync
+    if (timeStatus() != timeSet)
+      Serial.println(F("Unable to sync with the RTC"));
+    else
+      Serial.println(F("RTC has set the system time"));
   }
 }
 

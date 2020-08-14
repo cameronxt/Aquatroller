@@ -1,0 +1,57 @@
+  Commands are sent in the following format:
+ <1,2,0,100>
+ 
+ 
+
+0: // EEPROM
+     0: // Get Data from EEPROM
+     
+1: // LED's
+     0: // Get Target LED Brightness
+     	0,0 // 
+     1: // Set target
+     2: // Get Light Mode
+     3: // Set Light Mode
+     4: // Get LED On Time
+     5: // Set LED on time
+     6: // Get LED Off Time
+     7: // Set LED Off time
+
+2: // SD Card
+     In Progress
+     
+3: // Bluetooth
+     In Progress
+
+4: // PH
+     0: // Get target PH
+     1: // Set Target PH
+     2: // Get Heater delay time
+     3: // Set heater delay
+     4: // Get C02 PH Target
+     5: // Set C02 PH Target
+     6: // Get target PH drop with c02
+     7: // Set target PH drop with c02
+     8: // Get target PPM C02
+     9: // Set PPM C02
+     10: // Get Kh Hardness
+     11: // Set Kh hardness
+     12: // Get c02 on time
+     13: // Set c02 on time
+     
+5: // Temperature
+     0: // Get target temperature
+     1: // Set Target Temp
+     2:
+     3:
+     4:
+     5:
+     6:
+     7:
+     
+6: // Time
+      
+9: // Reset
+      9
+      	 9
+      	   0 // Soft Reset
