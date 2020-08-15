@@ -42,7 +42,7 @@ void BluetoothModule::recievePacket() {     // constantly monitors for new packe
     rc = Serial.read();                                         // Get char from Serial
 
     if (recvInProgress == true) {                               // Have we already started recieving a packet?
-      if (rc != endMarker) {                                      // If we have recieved the end marker
+      if (rc != endMarker) {                                      // If we haven't recieved the end marker
         receivedChars[ndx] = rc;                                  // then store new char in buffer
         ndx++;                                                    // increase index so we can get the next char
         if (ndx >= numChars) {                                    // if index has reached the end of the buffer
@@ -65,15 +65,41 @@ void BluetoothModule::recievePacket() {     // constantly monitors for new packe
 void BluetoothModule::parseData() {      // split the data into its parts
 
   char * strtokIndx; // this is used by strtok() as an index
+  parsedData.primary = 0;
+  parsedData.option = 0;
+  parsedData.subOption = 0;
+  parsedData.values.fValue = 0;
 
   strtokIndx = strtok(tempChars, ",");     // get the system
   parsedData.primary = atoi(strtokIndx);
+
   strtokIndx = strtok(NULL, ","); // this continues where the previous call left off
   parsedData.option = atoi(strtokIndx);
+
   strtokIndx = strtok(NULL, ",");
   parsedData.subOption = atoi(strtokIndx);
+
   strtokIndx = strtok(NULL, ",");
-  parsedData.value = atoi(strtokIndx);
+  char valueType = *strtokIndx;
+
+
+  strtokIndx = strtok(NULL, ",");
+  if (valueType == 'i' || valueType == 'I') {
+    parsedData.values.iValue = atoi(strtokIndx);
+  } else if ( valueType == 'f' || valueType == 'F') {
+    parsedData.values.fValue = atof(strtokIndx);
+  } else if ( valueType == 'l' || valueType == 'L') {
+    parsedData.values.lValue = atol(strtokIndx);
+  } else {
+    Serial.println (F("Invalid Data Type"));
+  }
+  Serial.println(parsedData.primary);
+  Serial.println(parsedData.option);
+  Serial.println(parsedData.subOption);
+  Serial.println(valueType);
+  Serial.println((int)parsedData.values.iValue);
+  Serial.println((float)parsedData.values.fValue);
+  Serial.println((unsigned long)parsedData.values.lValue);
 
   //    integerFromPC = atoi(strtokIndx);     // convert this part to an integer
   //    strcpy(messageFromPC, strtokIndx); // copy it to messageFromPC

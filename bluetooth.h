@@ -12,6 +12,13 @@ struct BTParse {
   byte option;
   byte subOption;
   byte value;
+
+  union Values {
+    float fValue; // 4 Bytes
+    unsigned char cValue[4]; // 4 Bytes
+    unsigned long lValue; // 4 Bytes
+    int iValue; // 2 Bytes
+  }values;
 };
 
 struct BTSettings {
