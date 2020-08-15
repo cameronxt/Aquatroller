@@ -5,14 +5,13 @@ Light::Light(Adafruit_PWMServoDriver *pwm, RTC_DS3231 *rtc) {
   _rtc = rtc;
   _data.normalFadeDelay = 5;
   _data.testFadeDelay = 5;
-  //  setSyncProvider(_rtc->get);
-  // _targetBright = _data.normalMaxBright;
+  _targetBright = _data.normalMaxBright;
 }
 
 void Light::init() {
   Wire.setClock(400000);
   _pwm->begin();
-  // pwm.setOutputMode(false);           // Set PWM Driver to open Drain for LEDs
+  // _pwm.setOutputMode(false);           // Set PWM Driver to open Drain for LEDs
   _pwm->setPWMFreq(1000);                // Set PWM Hz to reduce buzzing sound and Meanwell LLD's have a max of 1kHz
   for (int i = 0; i < 6; i++) {
     _pwm->setPin(i, 0, 0); // turn all channels off
@@ -24,7 +23,6 @@ void Light::init() {
 // Calls light control based on time and
 //  _data.mode
 void Light::loop(unsigned long ssm) {
-  //_rtc->now();
   switch (_data.mode) {
     case NORMAL:
       normalLights(ssm);

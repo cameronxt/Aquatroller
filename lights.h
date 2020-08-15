@@ -23,9 +23,9 @@ struct LightData {
   unsigned long testFadeDelay;
   unsigned long normalFadeDelay;
   byte mode = NORMAL;
-  unsigned long onTime = 16*60*60;
-  unsigned long offTime= 23*60*60;
-  int normalMaxBright = 4096 * .8;
+  unsigned long onTime = 16UL*60*60;
+  unsigned long offTime= 23UL*60*60;
+  int normalMaxBright = (float)4096 * 0.8;
 };
 
 class Light {
