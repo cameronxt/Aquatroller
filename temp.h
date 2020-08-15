@@ -1,5 +1,3 @@
-// TODO: Getters and setters for bluetooth control
-
 #ifndef temp_h
 #define temp_h
 #include "Arduino.h"
