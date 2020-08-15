@@ -44,7 +44,7 @@ const byte _bufSize = 10;    // Buffer size for PH values, 10 seems to work well
 struct PHData  {   
   //////////// PH Data ////////////////   
   int phPin = A0;       // PH Sensor Analog pin
-  int c02Pin = 8;       // C02 relay pin
+  int c02Pin = 7;       // C02 relay pin
 
   float targetPh = 7.0;                   // Our target ph, this will be our trigger point
   unsigned long checkPhDelay = 1000*10;                // Wait one second between Checks, this allows sensor to stabilize
