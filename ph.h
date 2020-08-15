@@ -45,7 +45,6 @@ struct PHData  {
   //////////// PH Data ////////////////   
   int phPin = A0;       // PH Sensor Analog pin
   int c02Pin = 8;       // C02 relay pin
-  //byte bufSize = 10;    // Buffer size for PH values, 10 seems to work well, TODO: may move into class after testing
 
   float targetPh = 7.0;                   // Our target ph, this will be our trigger point
   unsigned long checkPhDelay = 1000*10;                // Wait one second between Checks, this allows sensor to stabilize
@@ -147,14 +146,14 @@ class PH {
     int _sensorValue;             // Direct Sensor Value (0-1024)
     unsigned long _avgValue;      // Calculated average
     unsigned long _prevPhTime;    // When did we last read PH sensor
-    int _buf[_bufSize], _temp;        // Buffer to average results. Size determined by const int _bufSize
+    int _buf[_bufSize]; 
     byte _dropMe = 2;                     // How many high and lows to drop during calculations
     bool _calibrationMode = false;    // Flag to tell when we should be in PH calibration mode
     float _calTarget[2];
     float _calActual[2];
     float _currentPh;                 // What is the current ph value
     int _phIndex;                 // Index for PH buffer
-    bool _newPh = true;               // Flag to tell when we have a new ph reading  
+    bool _newPh = false;               // Flag to tell when we have a new ph reading  
     bool _needRestingPh = false;      // Flag for when its time to get the resting ph
     bool _c02On = false;              // Flag for C02 being on
     int _currentC02PPM;               // Stores current ppm of c02 based on ph drop

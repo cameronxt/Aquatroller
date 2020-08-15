@@ -7,7 +7,7 @@
 #include<DallasTemperature.h>
 
 const int tempPin = 2;
-const int heaterPin = 5;
+const int heaterPin = 7;
 
 struct TemperatureData {
   unsigned long heaterDelayTime = 30000; // checks temp for heater every minute
@@ -29,6 +29,8 @@ class Temp {
     Temp(DallasTemperature* _temp);
     void init();
     void loop(unsigned long currentTime);
+    
+    float getCurrentTemp() { return ( (temps[0] + temps[1]) / 2 );};
 
     float getTargetTemp();
     void setTargetTemp(float newTemp);

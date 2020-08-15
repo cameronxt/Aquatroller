@@ -33,7 +33,7 @@ enum EEPROM_SELECT {
 
 struct EMap {           // Struct to store all of eeprom settings
 
-  char VERSION[4] = "AA3";     // number to check and see if storage is valid
+  char VERSION[4] = "AA9";     // number to check and see if storage is valid
   unsigned long checkEepromDelay = 30*1000;
 
   // Partition Map: holds start address of each stored struct in EEPROM

@@ -1,5 +1,6 @@
   Commands are sent in the following format:
  <1,2,0,100>
+ <Primary, Option, Sub-Option, Value
  
  
 
@@ -25,11 +26,23 @@
 
 4: // PH
      0: // Get target PH
+       0:
+          0
      1: // Set Target PH
+         0:
+             Value
      2: // Get Heater delay time
+       0
+         0
      3: // Set heater delay
+         0
+      	    Value
      4: // Get C02 PH Target
+       0
+          0
      5: // Set C02 PH Target
+       0
+          Value
      6: // Get target PH drop with c02
      7: // Set target PH drop with c02
      8: // Get target PPM C02

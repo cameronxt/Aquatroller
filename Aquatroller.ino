@@ -53,10 +53,12 @@ void setup() {
 }
 
 void loop() {
-  // This is a non blocking bluetooth implementation. Thanks to Robin2's mega post for most of this code
-  unsigned long currentTime = millis();
-  bt.loop();          // Check for and save valid packets
 
+  unsigned long currentTime;
+  currentTime = millis();
+
+  // This is a non blocking bluetooth implementation. Thanks to Robin2's mega post for most of this code
+  bt.loop();          // Check for and save valid packets
   if (bt.newParse) {              // If we have a new parsed packet
     decodePacket(bt.parsedData);  // Decode and perform correct call
     bt.newParse = false;          // Set to false so we can get a new packet
@@ -66,7 +68,7 @@ void loop() {
 
 
 
-  //temp.loop(currentTime);
+  temp.loop(currentTime);
   light.loop(getTimeInSeconds(0, 0, 0));  // Run light controls, it needs to know the current time
   ph.loop(currentTime);
   eeprom.loop();
@@ -102,7 +104,7 @@ void decodePacket(BTParse data) { // Decides which actions should be taken on in
           Serial.println(light.getMode());
           break;
         case 3: // Set Light Mode
-           light.setMode(data.value);
+          light.setMode(data.value);
           break;
         case 4: // Get LED On Time
           Serial.print(F("Light on time: "));
@@ -192,18 +194,18 @@ void decodePacket(BTParse data) { // Decides which actions should be taken on in
         case 1: // Set Target Temp
           temp.setTargetTemp(data.value);
           break;
-        case 2:
+        case 2: // Get Heater delay time
           Serial.print(F("Heater Delay: "));
           Serial.println(temp.getHeaterDelay());
           break;
-        case 3:
+        case 3: // Set heater delay time
           temp.setHeaterDelay(data.value);
           break;
-        case 4:
+        case 4:  // Get Temperature check delay
           Serial.print(F("Temperature Delay: "));
           Serial.println(temp.getTempDelay());
           break;
-        case 5:
+        case 5:  // Set temperature check delay
           temp.setTempDelay(data.value);
           break;
         case 6:
@@ -220,9 +222,9 @@ void decodePacket(BTParse data) { // Decides which actions should be taken on in
       break;
     //////////// Soft Reset /////////////////////////
     case 9:
-      if (data.option == 9 && data.subOption == 9 && data.value ==1) {
+      if (data.option == 9 && data.subOption == 9 && data.value == 1) {
         resetFunc();
-        
+
       }
   }
 }

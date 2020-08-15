@@ -71,25 +71,23 @@ void PH::loop(unsigned long ssm) {
   // TODO: C02 Control
   //if ((ssm > _phData.c02OnTime) && (ssm < _phData.c02OffTime)) {   // Is it time for the c02 to be on
   if (millis() - _prevC02Time >= _phData.checkC02Delay) {        // Timer for c02 control, keeps from cycling relay to quickly
-    Serial.println("Checking C02 Levels");
-    //Serial.println(_prevPhTime);
-    if (_currentPh > _phData.targetPh) {                                // PH is higher than target
+    // Serial.println(F("C02 Time"));
+    if (_newPh) {
 
-      Serial.println(F("Turning C02: ON"));
-      turnOnC02();                                               // turn on c02
-    } else {
+      Serial.println("Checking C02 Levels");
+      if (_currentPh > _phData.targetPh) {           // PH is higher than target
 
-      Serial.println(F("Turning C02: OFF"));
-      turnOffC02();                                              // otherwise turn it off
+        Serial.println(F("Turning C02: ON"));
+        turnOnC02();                                 // turn on c02
+      } else {
+
+        Serial.println(F("Turning C02: OFF"));
+        turnOffC02();                                // otherwise turn it off
+      }
+      _prevC02Time = millis();                       // Reset timer
+      _newPh = false;
     }
-    _prevC02Time = millis();                                     // Reset timer
-    //}
-  } else {                                                         // If its not in the time window, make sure c02 is off
-    // Serial.println(F("Turning C02: OFF - Catch"));
-
-    //turnOffC02();
   }
-
 }
 
 // Reads the raw sensor value and stores it in the buffer, then advance buffer for next reading
@@ -109,14 +107,14 @@ void PH::readPhRawToBuffer() {
 
 // Called when buffer is full.
 void PH::processPhBuffer() {
-
+  int temp = 0;
   if (_phIndex >= _bufSize) {                // if buffer is full, lets calculate average value
     for (int i = 0; i < (_bufSize); i++) {   // First lets sort our results
       for (int j = i + 2; j < _bufSize - 1; j++) {
         if (_buf[i] > _buf[j]) {
-          _temp = _buf[i];
+          temp = _buf[i];
           _buf[i] = _buf[j];
-          _buf[j] = _temp;
+          _buf[j] = temp;
         }
 
       }
