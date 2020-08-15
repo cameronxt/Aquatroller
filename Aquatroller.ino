@@ -28,7 +28,7 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();  // Setup PWM Driver
 Light light(&pwm, &rtc);  // Setup my light, needs the driver and the time
 
 // Temp Sensors
-OneWire oneWire;                            // Setup onewire connection for comms with temp sensor(s)
+OneWire oneWire(2);                            // Setup onewire connection for comms with temp sensor(s)
 DallasTemperature tempSensors(&oneWire);    // tell temp sensor library to use oneWire to talk to sensors
 Temp temp(&tempSensors);                    // Tell the temp control library which sensors to use
 
@@ -46,7 +46,8 @@ void setup() {
   bt.setup();          // init bluetooth comms
   // sd.init();          // init sd card, TODO: if card not present dont try to log
   light.init();       // set initial state and begin running routines
-  ph.setup();
+  temp.init();
+//  ph.setup();
 
 
   Serial.println(F("Welcome to Aquatroller!"));
@@ -70,7 +71,7 @@ void loop() {
 
   temp.loop(currentTime);
   light.loop(getTimeInSeconds(0, 0, 0));  // Run light controls, it needs to know the current time
-  ph.loop(currentTime);
+//  ph.loop(currentTime);
   eeprom.loop();
   // Timer functions
   // unsigned long currentTime =
