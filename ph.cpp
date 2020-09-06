@@ -1,7 +1,7 @@
 #include "ph.h"
 
 // PH Constructor
-PH::PH(byte phInputPin, byte c02OutputPin, RTC_DS3231 *rtc) :
+PH::PH(byte phInputPin, byte c02OutputPin, DS3232RTC *rtc) :
   _phPin(phInputPin),   // PH Sensor Analog pin
   _c02Pin (c02OutputPin),   // C02 relay pin
   _rtc(rtc)
@@ -43,9 +43,8 @@ void PH::loop(unsigned long ssm) {
   //      Serial.println(_phData.checkPhDelay);
 
   // Timer so we only read ph every so often
-  if (millis() - _prevPhTime >= _phData.checkPhDelay) {
-    //Serial.println(F("Time to check PH"));
-    //Serial.println(F("its time to check it"));
+  if (millis() - _prevPhTime >= (unsigned long)(_phData.checkPhDelay * 1000)) {
+    // Serial.println(F("Time to check PH"));
     if (!_calibrationMode ) {                        // Dont read ph during calibration so probe stabilize without interrupt
       // Serial.println(F("PH Monitor Mode"));
       readPhRawToBuffer();                          // read raw data and store it to an array
@@ -60,7 +59,7 @@ void PH::loop(unsigned long ssm) {
   }
 
   // If resting PH is requested, either because its time or from a serial event (like bluetooth)
-  if (ssm > (_phData.c02OffTime + _phData.c02OffgasDelay )) {
+  if (ssm > (_phData.c02OffTime + (unsigned long)(_phData.c02OffgasDelay * 1000))) {
     _needRestingPh = true;
   }
   if (_needRestingPh && _newPh) {
@@ -70,7 +69,7 @@ void PH::loop(unsigned long ssm) {
 
   // TODO: C02 Control
   //if ((ssm > _phData.c02OnTime) && (ssm < _phData.c02OffTime)) {   // Is it time for the c02 to be on
-  if (millis() - _prevC02Time >= _phData.checkC02Delay) {        // Timer for c02 control, keeps from cycling relay to quickly
+  if (millis() - _prevC02Time >= (unsigned long)(_phData.checkC02Delay * 1000)) {      // Timer for c02 control, keeps from cycling relay to quickly
     // Serial.println(F("C02 Time"));
     if (_newPh) {
 
@@ -97,10 +96,10 @@ void PH::readPhRawToBuffer() {
   }
   if (_phIndex < _bufSize) {                // Bounds checking
     _buf[_phIndex] = analogRead(_phPin);    // store anolg value into buffer position
-    //            Serial.print(F("Raw Buffer Value #"));
-    //        Serial.print(_phIndex+1);
-    //        Serial.print(F(": "));
-    //        Serial.println(_buf[_phIndex]);
+//    Serial.print(F("Raw Buffer Value #"));
+//    Serial.print(_phIndex + 1);
+//    Serial.print(F(": "));
+//    Serial.println(_buf[_phIndex]);
     _phIndex++;                             // Advance buffer to next position
   }
 }
@@ -126,14 +125,19 @@ void PH::processPhBuffer() {
 
       _avgValue += _buf[i];
 
+      //                Serial.print(F("Raw Data Index #"));
+      //                Serial.print(i);
+      //                Serial.print(F(": "));
+      //                Serial.println(_buf[i]);
+
       //        Serial.print(F("Running average: "));
       //        Serial.println(_avgValue);
 
     }
 
 
-    float pHVol = ((float)_avgValue * 5.0 / 1024) / (_bufSize - (_dropMe * 2));    // average and convert to milli-volts
-    _currentPh = -5.70 * (float)pHVol + 21.34 + (float)_phData.phCalValue;                     // convert millivolts to PH reading
+    float pHVol = (((float)_avgValue / (_bufSize - (_dropMe * 2))) * 5.0 / 1024) ;    // average and convert to milli-volts
+    _currentPh = (-5.70 * (float)pHVol) + (21.34 + (float)_phData.phCalValue);                     // convert millivolts to PH reading
 
     // TEST
     Serial.print("PH = ");

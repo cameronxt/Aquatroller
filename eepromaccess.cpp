@@ -44,6 +44,9 @@ void EepromAccess::setup() {    // Check for previous config, if not found gener
     updateSettings();                             // Sets everything to default values
     Serial.println(F(" Done"));
   }
+
+  Serial.print(F("EEPROM Byte Size: "));
+  Serial.println(sizeOfEEPROM);
 }
 
 
@@ -62,14 +65,14 @@ void EepromAccess::getSettings() {    // Get all settings from EEPROM
 
 void EepromAccess::loop() {
   // Timer to reduce writes to eeprom
-  if (millis() - _prevEepromTime >= _eepromMap.checkEepromDelay) {
+  //if (millis() - _prevEepromTime >= _eepromMap.checkEepromDelay) {
     // compare eeprom to current values
     if (_needsUpdated) {        // Flagged by an incoming command that changes eeprom value
       updateSettings();
       _needsUpdated = false;    // Reset the flag
     }
-    _prevEepromTime = millis();
-  }
+   // _prevEepromTime = millis();
+  //}
 
 }
 

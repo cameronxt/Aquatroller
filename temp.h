@@ -8,9 +8,10 @@ const int tempPin = 2;
 const int heaterPin = 4;
 
 struct TemperatureData {
-  unsigned long heaterDelayTime = 30000; // checks temp for heater every minute
-  unsigned long tempDelayTime = 1000;     // How long to wait before getting temp again
-  float targetTemp = 82.0;               // Our desired temperature
+  
+  float targetTemp = 82.0;             // Our desired temperature
+  unsigned int heaterDelayTime = 60;   // checks temp every X seconds
+  unsigned int tempDelayTime = 10;     // How long to wait before getting temp again in seconds
 };
 
 class Temp {
@@ -33,11 +34,11 @@ class Temp {
     float getTargetTemp();
     void setTargetTemp(float newTemp);
     
-    unsigned long getHeaterDelay();
-    void setHeaterDelay(unsigned long newDelay);
+    unsigned int getHeaterDelay();
+    void setHeaterDelay(unsigned int newDelay);
     
-    unsigned long getTempDelay();
-    void setTempDelay(unsigned long newDelay);
+    unsigned int getTempDelay();
+    void setTempDelay(unsigned int newDelay);
     
     TemperatureData* getDataAddress() { return &tempData; };
 

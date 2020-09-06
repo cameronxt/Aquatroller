@@ -1,0 +1,17 @@
+Light	KEYWORD1
+
+init	KEYWORD2
+getDataAddress	KEYWORD2
+normalLights	KEYWORD2
+customLights	KEYWORD2
+setMode	KEYWORD2
+getMode	KEYWORD2
+setBright	KEYWORD2
+getBright	KEYWORD2
+setOnTIme	KEYWORD2
+getOnTime	KEYWORD2
+isLightTime	KEYWORD2
+calcFadeMap	KEYWORD2
+
+_normalMaxBright	LITERAL1
+
