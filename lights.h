@@ -21,14 +21,15 @@ const byte _numChannels = 6;
 struct Channel {
   byte stepTimeHours[_mapSize] =   {16, 17, 20, 21, 22};
   byte stepTimeMinutes[_mapSize] = {45, 30, 00, 30, 15};
-  int brightness[_mapSize] =       {20, 80,100, 70, 20};
+  int brightness[_mapSize] =       {20, 80, 100, 70, 20};
   int moonlightBright = 5;
-  int numberOfSteps[_mapSize+1];        // Calculated based on brightness change between steps
-  unsigned long fadeDelay[_mapSize+1];  //  Calculated based on supplied times and brightness
+  int numberOfSteps[_mapSize + 1];      // Calculated based on brightness change between steps
+  unsigned long fadeDelay[_mapSize + 1]; //  Calculated based on supplied times and brightness
   int stepCount;
   int currentBright;
   unsigned long prevFadeTime;
-    byte fadeIndex;
+  byte fadeIndex;
+  int resumeFadeDelay = 2000;   // Time to wait between fades when resume mid cycle
 };
 
 struct LightData {
@@ -37,7 +38,7 @@ struct LightData {
 
   unsigned long testFadeDelay;       // RAM Candidate - Can be calculated
   unsigned long normalFadeDelay;     // RAM Candidate - Can be calculated
-  byte onTimeHours = 16;                 // First 2 digits are hours, second are minutes
+  byte onTimeHours = 14;                 // First 2 digits are hours, second are minutes
   byte onTimeMinutes = 00;
   byte offTimeHours = 23;                // First 2 digits are hours, second are minutes
   byte offTimeMinutes = 00;
@@ -54,7 +55,9 @@ class Light {
     void init();
     void loop(unsigned long ssm);
 
-    int getDataAddress() { return &_data; };
+    int getDataAddress() {
+      return &_data;
+    };
 
     void normalLights();
     void customLights();
@@ -77,7 +80,7 @@ class Light {
 
     void calcFadeMap();
     void calcStartStep();
-    
+
     time_t intTimesToTime_t (int hours, int minutes);
     time_t byteTimesToTime_t (byte hours, byte minutes);
   private:

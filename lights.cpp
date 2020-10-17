@@ -30,13 +30,35 @@ void Light::init() {
   calcStartStep();
   calcFadeMap();  // Initialize the fade map
 
+  if ( isLightTime() ) {
+    Serial.println();
+    Serial.println(F("Light Should be on..."));
+    Serial.println(F("Setting fadeDelay to bring light to proper brightness"));
+    Serial.println();
+
+    for (byte i = 0; i < _numChannels; i++) {
+
+      Serial.print(F("Ch #"));
+      Serial.print(i);
+      Serial.print(F(" set to "));
+
+       unsigned long timeDiff = 1000ul * abs( (  _currentTime - intTimesToTime_t(_data.ch[i].stepTimeHours[_data.ch[i].fadeIndex], _data.ch[i].stepTimeMinutes[_data.ch[i].fadeIndex])));  // Calculate time difference in millis
+       unsigned long brightDiff = abs(_data.ch[i].brightness[_data.ch[i].fadeIndex] - _data.ch[i].currentBright); // calculate total amount of change in brightness
+
+      _data.ch[i].fadeDelay[_data.ch[i].fadeIndex] = timeDiff / brightDiff;
+
+      Serial.println(_data.ch[i].fadeDelay[_data.ch[i].fadeIndex]);
+      Serial.println();
+
+    }
+  }
+
 
 }
 
 // Main loop function.
-// Calls light control based on time and
-//  _data.mode
-// TODO: recalc fade map @ midnight
+// Calls light control based on time and _data.mode
+// TODO:
 void Light::loop(time_t currentTime) {
 
   _currentTime = currentTime;  // Update time in Library
@@ -55,12 +77,9 @@ void Light::loop(time_t currentTime) {
         testLights();
         break;
 
-        if (day() != _prevDay)  { // Once a day timer
-          calcFadeMap();
-          _prevDay = day(); // Reset timer
-        }
+
     }
-  } else {
+  } else {  // Run the moonlights
     //Serial.println(F("Its moonlight time"));
     for (int i = 0; i < _numChannels; i++) {
       if (_data.ch[i].currentBright != _data.ch[i].moonlightBright) {
@@ -75,9 +94,16 @@ void Light::loop(time_t currentTime) {
     }
 
   }
+
+  // Reset fadeMap at midnight
+  if (day() != _prevDay)  { // Once a day timer
+    calcFadeMap();
+    _prevDay = day(); // Reset timer
+  }
 }
 
 // Turns 2 ints (one for hours one for minutes) into a time_t of today
+// Need to remove in favor of byte storage
 time_t Light::intTimesToTime_t (int hoursNow, int minutesNow) {
   return ((hoursNow * SECS_PER_HOUR) + (minutesNow * SECS_PER_MIN) + (previousMidnight(_currentTime)));
 }
@@ -173,43 +199,46 @@ void Light::customLights() {
   for (int i = 0; i < _numChannels; i++ ) {
 
     byte fadeIndex = _data.ch[i].fadeIndex;
-//
-//              Serial.print(F("currentMillis: "));
-//              Serial.print(currentMillis);
-//              Serial.print(F(" - prevFadeTime: "));
-//              Serial.print( _data.ch[i].prevFadeTime );
-//              Serial.print(F(" - Fade Delay "));
-//              Serial.println( _data.ch[i].fadeDelay[fadeIndex] );
+    //
+    //              Serial.print(F("currentMillis: "));
+    //              Serial.print(currentMillis);
+    //              Serial.print(F(" - prevFadeTime: "));
+    //              Serial.print( _data.ch[i].prevFadeTime );
+    //              Serial.print(F(" - Fade Delay "));
+    //              Serial.println( _data.ch[i].fadeDelay[fadeIndex] );
 
     if (currentMillis - _data.ch[i].prevFadeTime > _data.ch[i].fadeDelay[fadeIndex]) {  // Channel timers
       Serial.println();
       Serial.print(F("Channel #"));
       Serial.print(i);
       Serial.print(F(" - Index: "));
-      Serial.print(fadeIndex );
-      Serial.print(F(" - Steps: "));
-      Serial.println( _data.ch[i].stepCount );
-      Serial.print(F("Adjusting "));
+      Serial.println(fadeIndex );
 
-      if (fadeIndex == 0) { // If it the first step
+      _data.ch[i].prevFadeTime += _data.ch[i].fadeDelay[fadeIndex]; // Reset timer
 
-        Serial.println(F("using on time"));
-        _data.ch[i].currentBright = map(_data.ch[i].stepCount, 0, _data.ch[i].numberOfSteps[fadeIndex], _data.ch[i].moonlightBright, _data.ch[i].brightness[fadeIndex]);
+      if (_data.ch[i].currentBright < _data.ch[i].brightness[fadeIndex]) { // if brightness needs to increase
+        _data.ch[i].currentBright++;
+        Serial.print(F("Brightness increased to: "));
+        Serial.println(_data.ch[i].currentBright);
+      } else if (_data.ch[i].currentBright > _data.ch[i].brightness[fadeIndex]) {   // if brightness needs to decrease
+        _data.ch[i].currentBright--;
+        Serial.print(F("Brightness decreased to: "));
+        Serial.println(_data.ch[i].currentBright);
 
-      } else if ( fadeIndex < _mapSize) { // if its not the first or last step
-
-        Serial.println(F("using array times"));
-        _data.ch[i].currentBright = map(_data.ch[i].stepCount, 0, _data.ch[i].numberOfSteps[fadeIndex], _data.ch[i].brightness[fadeIndex - 1], _data.ch[i].brightness[fadeIndex]);
-
-      } else {  // Otherwise it must be the last fade step
-
-        Serial.println(F("using off time"));
-        _data.ch[i].currentBright = map(_data.ch[i].stepCount, 0, _data.ch[i].numberOfSteps[fadeIndex], _data.ch[i].brightness[fadeIndex-1], _data.ch[i].moonlightBright);
-
+        // otherwise check to see if its time to move to the next fade cycle
+      } else if (_currentTime >= byteTimesToTime_t( _data.ch[i].stepTimeHours[fadeIndex], _data.ch[i].stepTimeMinutes[fadeIndex] )) {
+        if ( _data.ch[i].fadeIndex <= _mapSize ) {   // Advance and reset fade index
+          Serial.println(F("Incresing fadeIndex to "));
+          _data.ch[i].fadeIndex++;
+          Serial.println(_data.ch[i].fadeIndex);
+        } else if (_currentTime >= byteTimesToTime_t( _data.offTimeHours, _data.offTimeMinutes )) {
+          _data.ch[i].fadeIndex = 0;
+        }
       }
 
-      _pwm->setPin(i, _data.ch[i].currentBright, 0);  // Set the brightness for this channel
-      _data.ch[i].prevFadeTime += _data.ch[i].fadeDelay[fadeIndex]; // Reset timer
+      _pwm->setPin(i, _data.ch[i].currentBright, 0);  // Set brightness on PWM Driver
+
+
 
       Serial.print(F("Number of steps: "));
       Serial.println(_data.ch[i].numberOfSteps[fadeIndex]);
@@ -227,29 +256,6 @@ void Light::customLights() {
       Serial.println(_data.ch[i].currentBright);
       Serial.println();
 
-      if ( _data.ch[i].stepCount < _data.ch[i].numberOfSteps[fadeIndex]) { // Advance and reset step counter index
-
-        Serial.println(F("Increasing stepCount to "));
-        _data.ch[i].stepCount++;
-        Serial.println(_data.ch[i].stepCount);
-
-      } else {    // Reset stepCount
-
-        Serial.println(F("Reset StepCount"));
-        _data.ch[i].stepCount = 0;
-
-        if ( _data.ch[i].fadeIndex <= _mapSize ) {   // Advance and reset fade step index
-          Serial.println(F("Incresing fadeIndex to "));
-          _data.ch[i].fadeIndex++;
-          Serial.println(_data.ch[i].fadeIndex);
-
-        } else {    // Reset fade index
-
-          Serial.println(F("Resetting fadeIndex"));
-          _data.ch[i].fadeIndex = 0;
-
-        }
-      }
     }
   }
 }
@@ -263,6 +269,8 @@ void Light::calcFadeMap() {
   unsigned long startTime = micros();
   unsigned long endTime;
 
+
+  // Debug output
   Serial.println();
   Serial.println(F("Calculating Fade Map..."));
   Serial.println();
@@ -277,9 +285,10 @@ void Light::calcFadeMap() {
   for (byte i = 0; i < _numChannels ; i++) {  // iterate through channels
 
     Serial.print(F("Channel #"));
-    Serial.println(i );  // +1 for human readability
+    Serial.println(i);
 
-    for (byte j = 0; j <= _mapSize; j++) {  // iterate through step times
+
+    for (byte j = _data.ch[i].fadeIndex; j <= _mapSize; j++) {  // iterate through step times
 
       Serial.print(F("Map Step #"));
       Serial.println(j);
@@ -287,57 +296,55 @@ void Light::calcFadeMap() {
       unsigned long timeDiff;  // Difference between times in millis
       unsigned int brightDiff;          // Difference in brightness
 
-      if (j == 0) {     // If index is on its first pass
-//        Serial.println(F("J == 0"));
-        timeDiff =  abs( ( intTimesToTime_t(_data.ch[i].stepTimeHours[j], _data.ch[i].stepTimeMinutes[j]) - _onTime));  // Calculate time difference in millis
-        brightDiff = abs(_data.ch[i].brightness[j] - _data.ch[i].moonlightBright); // calculate total amount of change in brightness
+      if ((j == _data.ch[i].fadeIndex) && isLightTime()) {  // If we are in this step on resume
 
-//        Serial.print(F("Next requested brightness: "));
-//        Serial.println(_data.ch[i].brightness[j]);
-//        Serial.print(F("Previous requested brightness: "));
-//        Serial.println(_data.ch[i].moonlightBright);
-//        Serial.print(F("Step Time: "));
-//        Serial.println(intTimesToTime_t(_data.ch[i].stepTimeHours[j], _data.ch[i].stepTimeMinutes[j]));
-//        Serial.print(F("OnTime: "));
-//        Serial.println(_onTime);
+        Serial.println(F("J >= fadeIndex && isLightTime() "));
 
-      } else if (( j > 0 ) && (j < _mapSize  )) {
-//        Serial.println(F("J > 0 && j < mapSize"));
-        timeDiff =  abs(( intTimesToTime_t(_data.ch[i].stepTimeHours[j], _data.ch[i].stepTimeMinutes[j])  - intTimesToTime_t(_data.ch[i].stepTimeHours[j - 1], _data.ch[i].stepTimeMinutes[j - 1])));
+        timeDiff = 1000ul * abs( (  _currentTime - intTimesToTime_t(_data.ch[i].stepTimeHours[j], _data.ch[i].stepTimeMinutes[j])));  // Calculate time difference in millis
+        brightDiff = abs(_data.ch[i].brightness[j] - _data.ch[i].currentBright); // calculate total amount of change in brightness
+
+      }
+      else if (j == 0) {     // If index is on its first pass
+
+        Serial.println(F("J == 0"));
+        timeDiff = 1000ul * abs( (  _onTime - intTimesToTime_t(_data.ch[i].stepTimeHours[j], _data.ch[i].stepTimeMinutes[j])));  // Calculate time difference in millis
+        brightDiff = abs(_data.ch[i].brightness[j] - _data.ch[i].currentBright); // calculate total amount of change in brightness
+
+        //        Serial.print(F("Next requested brightness: "));
+        //        Serial.println(_data.ch[i].brightness[j]);
+        //        Serial.print(F("Previous requested brightness: "));
+        //        Serial.println(_data.ch[i].moonlightBright);
+        //        Serial.print(F("Step Time: "));
+        //        Serial.println(intTimesToTime_t(_data.ch[i].stepTimeHours[j], _data.ch[i].stepTimeMinutes[j]));
+        //        Serial.print(F("OnTime: "));
+        //        Serial.println(_onTime);
+
+      } else if (( j > 0 ) && (j < _mapSize  )) {   // If index is all but first or last
+        Serial.println(F("J > 0 && j < mapSize"));
+        timeDiff = 1000ul * abs(( intTimesToTime_t(_data.ch[i].stepTimeHours[j], _data.ch[i].stepTimeMinutes[j])  - intTimesToTime_t(_data.ch[i].stepTimeHours[j - 1], _data.ch[i].stepTimeMinutes[j - 1])));
         brightDiff = abs((_data.ch[i].brightness[j]) - (_data.ch[i].brightness[j - 1]));
 
-//        Serial.print(F("Current requested brightness: "));
-//        Serial.println(_data.ch[i].brightness[j]);
-//        Serial.print(F("Previous requested brightness: "));
-//        Serial.println(_data.ch[i].brightness[j - 1]);
+        //        Serial.print(F("Current requested brightness: "));
+        //        Serial.println(_data.ch[i].brightness[j]);
+        //        Serial.print(F("Previous requested brightness: "));
+        //        Serial.println(_data.ch[i].brightness[j - 1]);
 
       } else {
 
-//        Serial.println(F("J >= mapSize"));
-        timeDiff =  abs( ( _offTime - intTimesToTime_t(_data.ch[i].stepTimeHours[j - 1], _data.ch[i].stepTimeMinutes[j - 1] )));
-        brightDiff = _data.ch[i].brightness[j -1 ] - _data.ch[i].moonlightBright;
+        Serial.println(F("J >= mapSize"));
+        timeDiff =  1000ul * abs( (intTimesToTime_t(_data.ch[i].stepTimeHours[j - 1], _data.ch[i].stepTimeMinutes[j - 1] )) -  _offTime );
+        brightDiff = _data.ch[i].brightness[j - 1 ] - _data.ch[i].moonlightBright;
 
-//        Serial.print(F("Current requested brightness: "));
-//        Serial.println(_data.ch[i].moonlightBright);
-//        Serial.print(F("Previous requested brightness: "));
-//        Serial.println(_data.ch[i].brightness[j - 1]);
+        //        Serial.print(F("Current requested brightness: "));
+        //        Serial.println(_data.ch[i].moonlightBright);
+        //        Serial.print(F("Previous requested brightness: "));
+        //        Serial.println(_data.ch[i].brightness[j - 1]);
 
       }
-//      Serial.print(F("Bright Diff: "));
-//      Serial.println(brightDiff);
-//      Serial.print(F("Time Diff: "));
-//      Serial.println(timeDiff);
-        _data.ch[i].numberOfSteps[j] = brightDiff;
-        _data.ch[i].fadeDelay[j] = (timeDiff * 1000) / brightDiff; // Calculate and store fade delay
-        //_data.ch[i].fadeDelay[j] = 50; // TODO: delete this, just for testing to make it go quicker
-      
-//      Serial.print(F("Number of steps: "));
-//      Serial.println(_data.ch[i].numberOfSteps[j]);
-//      Serial.print(F("FadeDelay: "));
-//      Serial.println(_data.ch[i].fadeDelay[j]);
-//      Serial.println();
-
-
+      _data.ch[i].fadeDelay[j] = timeDiff / brightDiff;
+      Serial.print(F("fadeDelay: "));
+      Serial.print(_data.ch[i].fadeDelay[j]);
+      Serial.println();
     }
   }
   endTime = micros();
@@ -367,7 +374,6 @@ void Light::calcStartStep() {
     //    Serial.print(F("Off Time: "));
     //    Serial.println( byteTimesToTime_t(_data.onTimeHours, _data.onTimeMinutes) );
     //    Serial.println();
-
 
     for (byte i = 0; i < _numChannels ; i++) {  // iterate through channels
       //      Serial.println();
@@ -400,9 +406,6 @@ void Light::calcStartStep() {
               if (_currentTime < byteTimesToTime_t(_data.ch[i].stepTimeHours[j], _data.ch[i].stepTimeMinutes[j] )  ) {
                 // If this is the correct index window for current time
                 _data.ch[i].fadeIndex = j;    // Save our index for this channel
-                // Calculate which step we should be on
-                // example: map ( currentTime, previousIndexTime, nextIndexTime, currentBrightness, target brightness)
-                _data.ch[i].stepCount = map(_currentTime, byteTimesToTime_t( _data.onTimeHours, _data.onTimeMinutes), byteTimesToTime_t( _data.ch[i].stepTimeHours[j], _data.ch[i].stepTimeMinutes[j]), 0 , _data.ch[i].brightness[j]);
                 positionFound[i] = true;
 
 
@@ -480,6 +483,7 @@ void Light::calcStartStep() {
 
               }
             }
+            Serial.println();
 
           }
 

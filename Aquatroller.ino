@@ -25,7 +25,6 @@ void(* resetFunc) (void) = 0;     // Reset frunction
 BluetoothModule bt;     // Create bt instance
 SDAccess sd;            // create SD card instance
 DS3232RTC rtc;         // Create RTC instance
-
 PH ph(A0, 8, &rtc);     // Create Ph Controller - Inputs = (PH Input Pin, C02 Relay Trigger Pin, Pointer to RTC)
 
 // PWM and LEDS
@@ -81,10 +80,10 @@ void loop() {
 
 
 
-//  temp.loop(currentTime);
+  temp.loop(currentTime);
   light.loop(now());  // Run light controls, it needs to know the current time
-//  ph.loop(currentTime);
-  //eeprom.loop();
+  ph.loop(currentTime);
+  eeprom.loop();
 
 
 
@@ -267,6 +266,10 @@ void decodePacket(BTParse data) { // Decides which actions should be taken on in
           Serial.println(light.getOffTime());
 
           break;
+
+          case 1: // Set Current Time
+
+          break;
         default:
           Serial.println(F("Invalid Option Argument"));
           break;
@@ -276,7 +279,12 @@ void decodePacket(BTParse data) { // Decides which actions should be taken on in
     case 9:
       Serial.println(F("Reset Command Recieved"));
       if (data.option == 1 && data.subOption == 1) {
-        Serial.println(F("Reset Authorized"));
+        Serial.println(); Serial.println(); Serial.println(); Serial.println(); Serial.println(); Serial.println();
+        Serial.println(); Serial.println(); Serial.println(); Serial.println(); Serial.println(); Serial.println();
+        Serial.println(F("!!!!!!!!!!!!!!!!"));
+        Serial.println(F("Reseting Device"));
+        Serial.println(); Serial.println();
+        delay(2000);
         resetFunc();
 
       }
