@@ -30,7 +30,7 @@ void PH::setup() {
    final output PH. Based on this PH, we decide if we need to turn
    on c02 or turn it off.
 */
-// TODO: C02 Control && Getting resting PH
+// C02 Control && Getting resting PH
 void PH::loop(unsigned long ssm) {
   //      Serial.print(F("PH Loop: "));
   //      Serial.print(millis());
@@ -67,7 +67,6 @@ void PH::loop(unsigned long ssm) {
   }
 
 
-  // TODO: C02 Control
   //if ((ssm > _phData.c02OnTime) && (ssm < _phData.c02OffTime)) {   // Is it time for the c02 to be on
   if (millis() - _prevC02Time >= (unsigned long)(_phData.checkC02Delay * 1000)) {      // Timer for c02 control, keeps from cycling relay to quickly
     // Serial.println(F("C02 Time"));

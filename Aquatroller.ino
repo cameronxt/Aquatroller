@@ -156,9 +156,23 @@ void decodePacket(BTParse data) { // Decides which actions should be taken on in
       break;
     /////////////// SD Card Actions ////////////////
     case 2:
+      // TODO: Add SD cards actions
+      // Save/Log data
+      // -- Temperature
+      // -- PH/C02
+      // -- Lights
+      // Settings Backup/Restore
+      // -- Check for backup file
+      // -- Restore backup file
+      // -- Create backup file
       break;
     /////////////// Bluetooth Actions //////////////
     case 3:
+      // TODO: Bluetooth actions
+      // Connect/disconnect
+      // Change Name
+      // Send Logs
+      // Live Data Stream
       break;
     /////////////// PH Actions /////////////////////
     case 4:

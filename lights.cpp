@@ -58,7 +58,6 @@ void Light::init() {
 
 // Main loop function.
 // Calls light control based on time and _data.mode
-// TODO:
 void Light::loop(time_t currentTime) {
 
   _currentTime = currentTime;  // Update time in Library
@@ -184,7 +183,6 @@ void Light::normalLights() {
 }
 
 // Light mode = Custom - Main loop method
-// TODO: All of it!
 void Light::customLights() {
   //Serial.println(F("Custom Light Loop"));
   //    Serial.println(F("Light Time: true"));
@@ -355,7 +353,7 @@ void Light::calcFadeMap() {
 }
 
 
-// ?TODO: "inject" us into the correct part of fade if we turn on during On Period
+// "inject" us into the correct part of fade if we turn on during On Period
 void Light::calcStartStep() {
 
   if ( isLightTime() ) {

@@ -6,7 +6,7 @@ Temp::Temp(DallasTemperature* tempSensors) {
 
 void Temp::init() {
   Serial.println(F("Initializing Temperature Controls... "));
-  _temp->begin();                           // Initialize comms with temp sensors
+  _temp->begin();                           // Initialize comms for sensors
   _temp->setWaitForConversion("FALSE");     // We dont want to wait, it blocks us, so we will time it ourselves
   pinMode(heaterPin, OUTPUT);               // Setup heater pin as output
   digitalWrite(heaterPin, LOW);            // Turn it off
@@ -44,14 +44,15 @@ void Temp::getTemps(unsigned long currentTime) {
     _temp->requestTemperatures();                                 // actual temp request
     waitingToCheck = true;                                        // true so we know there is a conversion happening
     prevTempTime = millis();                                      // reset temp delay timer
-    prevConversionTime = millis();                                    // start Conversion timer
   }
 
-  if ((currentTime - prevConversionTime >= conversionTime) && (waitingToCheck)) {       // If we are waiting on a conversion and it has been long enough
+  if ((currentTime - prevConversionTime >= conversionDelayTime) && (waitingToCheck)) {       // If we are waiting on a conversion and it has been long enough
     waitingToCheck = false;                                                             // Reset conversion check flag
     temps[0] = _temp->getTempFByIndex(0);                                               // Read first sensor on the wire
     temps[1] = _temp->getTempFByIndex(1);                                               // Read second sensor on the wire
+    prevConversionTime += conversionDelayTime;          // start Conversion timer
 
+    
 //    if (temps[0] == -196.0) {
 //      Serial.println(F("Temp 1: ERROR"));
 //    } else {
@@ -84,26 +85,32 @@ void Temp::turnHeaterOff() {
   }
 }
 
+// Getter for current heater change delay (heaterDelayTime)
 unsigned int Temp::getHeaterDelay() {
   return tempData.heaterDelayTime;
 }
 
+// Setter for current heater change delay (heaterDelayTime)
 void Temp::setHeaterDelay(unsigned int newDelay) {
   tempData.heaterDelayTime = newDelay;
 }
 
+// Getter for current temp check delay (tempDelayTime)
 unsigned int Temp::getTempDelay() {
   return tempData.tempDelayTime;
 }
 
+// Setter for current temp delay (tempDelayTime)
 void Temp::setTempDelay(unsigned int newDelay) {
   tempData.tempDelayTime = newDelay;
 }
 
+// Getter for current target temperature (targetTemp)
 float Temp::getTargetTemp() {
   return tempData.targetTemp;
 }
 
+// Setter for current target temperature (targetTemp)
 void Temp::setTargetTemp(float newTemp) {
   tempData.targetTemp = newTemp;
 }
