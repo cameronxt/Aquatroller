@@ -20,13 +20,12 @@ bool EepromAccess::checkForSettings (EMap checkMap) {
   if (strstr(checkMap.VERSION, _eepromMap.VERSION)) {   // If previous version is found, then true
     Serial.println(F("Previous config found..."));
     return true;
-  } else {                                      // else false
+  } else {                                      // else return false
     Serial.println(F("No config found..."));
     return false;
   }
 }
 
-// TODO: Check for settings in eeprom and load into memory if there
 void EepromAccess::setup() {    // Check for previous config, if not found generate new one
 
   EMap tempMap = getMap();      // Put eeprom contents in new Temporary EEPROM map
@@ -44,10 +43,13 @@ void EepromAccess::setup() {    // Check for previous config, if not found gener
     updateSettings();                             // Sets everything to default values
     Serial.println(F(" Done"));
   }
+
+  Serial.print(F("EEPROM Byte Size: "));
+  Serial.println(sizeOfEEPROM);
 }
 
 
-void EepromAccess::updateSettings() {           // Updates(not write) eeprom with new values
+void EepromAccess::updateSettings() {           // Updates(only writes changes) eeprom with new values
   EEPROM.put(settingsAddressEEPROM, _eepromMap);
   EEPROM.put(phAddressEEPROM, *_phData );
   EEPROM.put(lightAddressEEPROM, _lightData);
@@ -62,14 +64,14 @@ void EepromAccess::getSettings() {    // Get all settings from EEPROM
 
 void EepromAccess::loop() {
   // Timer to reduce writes to eeprom
-  if (millis() - _prevEepromTime >= _eepromMap.checkEepromDelay) {
+  //if (millis() - _prevEepromTime >= _eepromMap.checkEepromDelay) {
     // compare eeprom to current values
     if (_needsUpdated) {        // Flagged by an incoming command that changes eeprom value
       updateSettings();
       _needsUpdated = false;    // Reset the flag
     }
-    _prevEepromTime = millis();
-  }
+   // _prevEepromTime = millis();
+  //}
 
 }
 
@@ -82,6 +84,8 @@ void EepromAccess::resetEeprom() {
   }
   Serial.println(F("EEPROM Cleared"));
 }
+
+// Allows you to update a single setting type, instead of all data
 void EepromAccess::updateSelectEeprom(EEPROM_SELECT selection) {
   switch (selection) {
     case ALL:
@@ -103,6 +107,7 @@ void EepromAccess::updateSelectEeprom(EEPROM_SELECT selection) {
 }
 
 
+// Allows you to retrieve a single setting type, instead of all data
 void EepromAccess::getSelectEeprom(EEPROM_SELECT selection) {
   switch (selection) {
     case ALL:

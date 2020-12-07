@@ -23,6 +23,7 @@
  * - Option 2: Modify or rewrite my loop(). Downside to this is you lose your 
  *  modifications when you update this library.
  * 
+ * TODO: Change delays to ints and use seconds
  * TODO: Logic to control when c02 is allowed to be on
  * TODO: Calibration Logic and mode: Still need a way to input Target PH, will use bluetooth
  * TODO: Logic to control c02 based on PH
@@ -34,51 +35,53 @@
 
 #include <Arduino.h>
 #include <DS3232RTC.h>                 // https://github.com/JChristensen/DS3232RTC
-#include "RTClib.h"
-#include <TimeLib.h>
+//#include "RTClib.h"
+//#include <TimeLib.h>
+
+  const int phPin = A0;       // PH Sensor Analog pin
+  const int c02Pin = 7;       // C02 relay pin
 
 const byte _bufSize = 10;    // Buffer size for PH values, 10 seems to work well 
 
 
  // Structure to store all user adjustable data for easier writing to EEPROM
 struct PHData  {   
-  //////////// PH Data ////////////////   
-  int phPin = A0;       // PH Sensor Analog pin
-  int c02Pin = 7;       // C02 relay pin
-
-  float targetPh = 7.0;                   // Our target ph, this will be our trigger point
-  unsigned long checkPhDelay = 1000*10;                // Wait one second between Checks, this allows sensor to stabilize
-  unsigned long phStabilizeDelay = 1000 * 60 * 2;   // Delay to wait for ph to fully stabilize
-  float restingPh;                                  // PH after c02 has off-gassed
   
-  ///////// Calibration Data ///////////
-  float phCalValue = 2.8;           // Offset of ph value since sensor is linear
+  unsigned int checkC02Delay = 30;        // Delay before cycling c02 relay in millis seconds
   
-  //////////// C02 Data ////////////////
-  unsigned long checkC02Delay = 30000;        // Delay before cycling c02 relay in millis
-  float targetPhC02 = 7.0;                    // PH target to know we have enough c02
-  int targetPPMC02 = 20;                      // PPM of c02 that we are requesting
-  float khHardness = 4.0;                     // KH hardness of your tank
-  unsigned long c02OnTime;                    // c02 On time in seconds since midnight
-  unsigned long c02OffTime;                   // c02 Offtime
+  unsigned int checkPhDelay = 1;                // Wait one second between Checks, this allows sensor to stabilize // TODO: Change to seconds
+  unsigned int phStabilizeDelay = 60 * 60 * 2;   // Delay to wait for ph to fully stabilize                            // TODO: Change to seconds
+  unsigned int c02OnTime;                    // c02 On time in seconds since midnight                                    // TODO: Change to minutes
+  unsigned int c02OffTime;                   // c02 Offtime                                                              // TODO: Change to minutes
   
   // TODO: Buildup and off-gas logic
   // Plan to use these to allow the c02 to be at correct ppm by 
   // on time and to know when we are totlly off-gassed
-  unsigned long c02OffgasDelay = 1000 * 60 * 60 * 2;      // Offgas delay, starts at 2 hours, plan to learn this based off PH readings
-  unsigned long c02BuildupTime = 1000 * 60 *30;           // How long before lights should we turn on C02
+  unsigned int c02OffgasDelay = 60 * 60 * 2;      // Offgas delay, starts at 2 hours, plan to learn this based off PH readings - 2 hours
+  unsigned int c02BuildupTime =  60 * 30;           // How long before lights should we turn on C02 - 30 minutes
+  
+
+  unsigned int targetPPMC02 = 20;                      // PPM of c02 that we are requesting
+
+  float targetPh = 7.0;                   // Our target ph, this will be our trigger point
+  float restingPh;                                  // PH after c02 has off-gassed
+  
+  float phCalValue = 2.7;           // Offset of ph value since sensor is linear
+  
+  float targetPhC02 = 7.0;                    // PH target to know we have enough c02
+  float khHardness = 4.0;                     // KH hardness of your tank
 };
 
 class PH {
 
   public: PHData _phData;
-  RTC_DS3231 *_rtc;         // Create RTC pointer
+  DS3232RTC *_rtc;         // Create RTC pointer
 
   public:
     
 
     //////////// PH Methods ////////////
-    PH(byte phInputPin, byte c02OutputPin, RTC_DS3231 *rtc);
+    PH(byte phInputPin, byte c02OutputPin, DS3232RTC *rtc);
     
     void setup();
     void loop(unsigned long ssm);
@@ -95,8 +98,8 @@ class PH {
     void setTargetPh(float newTarget) { _phData.targetPh = newTarget; };
     float getTargetPh() { return _phData.targetPh; };
     
-    void setPhDelay(unsigned long newDelay) { _phData.checkPhDelay = newDelay; };
-    unsigned long getPhDelay() { return _phData.checkPhDelay; };
+    void setPhDelay(unsigned int newDelay) { _phData.checkPhDelay = newDelay; };
+    unsigned int getPhDelay() { return _phData.checkPhDelay; };
 
     
     void setCalPoints();                          // Set the calibration points
@@ -130,11 +133,11 @@ class PH {
     float getKhHardness () { return _phData.khHardness; };
     void setKhHardness (float khHardness) { _phData.khHardness = khHardness; };
 
-    unsigned long getC02OnTime() { return _phData.c02OnTime; } ;
-    void setC02OnTime(unsigned long onTime) { _phData.c02OnTime; };
+    unsigned int getC02OnTime() { return _phData.c02OnTime; } ;
+    void setC02OnTime(unsigned int onTime) { _phData.c02OnTime; };
 
-    unsigned long getC02OffTime() { return _phData.c02OffTime; } ;
-    void setC02OffTime(unsigned long onTime) { _phData.c02OffTime; };
+    unsigned int getC02OffTime() { return _phData.c02OffTime; } ;
+    void setC02OffTime(unsigned int onTime) { _phData.c02OffTime; };
 
     bool isC02On() { return _c02On; };
 

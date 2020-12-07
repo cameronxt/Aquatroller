@@ -68,7 +68,7 @@ void BluetoothModule::parseData() {      // split the data into its parts
   parsedData.primary = 0;
   parsedData.option = 0;
   parsedData.subOption = 0;
-  parsedData.values.fValue = 0;
+  parsedData.values.fValue = 0; // clear all xValues as it is a union
 
   strtokIndx = strtok(tempChars, ",");     // get the system
   parsedData.primary = atoi(strtokIndx);
@@ -93,13 +93,13 @@ void BluetoothModule::parseData() {      // split the data into its parts
   } else {
     Serial.println (F("Invalid Data Type"));
   }
-  Serial.println(parsedData.primary);
-  Serial.println(parsedData.option);
-  Serial.println(parsedData.subOption);
-  Serial.println(valueType);
-  Serial.println((int)parsedData.values.iValue);
-  Serial.println((float)parsedData.values.fValue);
-  Serial.println((unsigned long)parsedData.values.lValue);
+//  Serial.println(parsedData.primary);
+//  Serial.println(parsedData.option);
+//  Serial.println(parsedData.subOption);
+//  Serial.println(valueType);
+//  Serial.println((int)parsedData.values.iValue);
+//  Serial.println((float)parsedData.values.fValue);
+//  Serial.println((unsigned long)parsedData.values.lValue);
 
   //    integerFromPC = atoi(strtokIndx);     // convert this part to an integer
   //    strcpy(messageFromPC, strtokIndx); // copy it to messageFromPC

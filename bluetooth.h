@@ -13,20 +13,21 @@ struct BTParse {
   byte subOption;
   byte value;
 
-  union Values {
+  union Values {      // A litle union magic so we can read incoming data easily
     float fValue; // 4 Bytes
-    unsigned char cValue[4]; // 4 Bytes
     unsigned long lValue; // 4 Bytes
+    char cValue[4]; // 4 Bytes
     int iValue; // 2 Bytes
-  }values;
+  } values;
 };
 
-struct BTSettings {
-  int txPin = 0;
-  int rxPin = 1;
+// Maybe make const out of these
+//struct BTSettings {
+  const int txPin = 0;
+  const int rxPin = 1;
 
 
-};
+//};
 
 class BluetoothModule {
   public:

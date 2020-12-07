@@ -33,10 +33,7 @@ enum EEPROM_SELECT {
 
 struct EMap {           // Struct to store all of eeprom settings
 
-  char VERSION[4] = "AA3";     // number to check and see if storage is valid
-  unsigned long checkEepromDelay = 30*1000;
-
-  // Partition Map: holds start address of each stored struct in EEPROM
+  char VERSION[4] = "AA2";     // number to check and see if storage is valid
 
 };
 
@@ -44,6 +41,9 @@ const int settingsAddressEEPROM = 0;
 const int phAddressEEPROM = sizeof(EMap) + 1;                  // Address offset for PH data
 const int lightAddressEEPROM = sizeof(PHData) + phAddressEEPROM + 1;   // Address offset for Light data
 const int tempAddressEEPROM = sizeof(LightData) + lightAddressEEPROM + 1;
+const int sizeOfEEPROM = sizeof(TemperatureData) + tempAddressEEPROM+1;
+
+
 
 class EepromAccess {
 
